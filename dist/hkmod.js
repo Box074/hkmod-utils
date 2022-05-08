@@ -79,7 +79,8 @@ program.command("build [projectFile]")
         }
     }
     else {
-        program.error("Build failed");
+        console.dir(result);
+        program.error(result.stderr + "\nBuild failed");
     }
 });
 program.command("generateCsproj [outProject]")

@@ -89,21 +89,18 @@ export class ProjectDependenciesManager {
         var data = await downloadFile(cache.url);
         var ignoreFiles = item.ignoreFiles || [];
         var path = new URL(cache.url).pathname;
-        console.log(cache.url);
         if (path.endsWith(".zip")) {
             var temp = join(tmpdir(), randomUUID());
             mkdirSync(temp);
             
-            console.log(temp);
             var zipFile = join(tmpdir(), randomUUID() + ".zip");
             writeFileSync(zipFile, data);
-            console.log(zipFile);
             await compressing.zip.uncompress(zipFile, temp);
             
             let files = readdirSync(temp);
             for (let i = 0; i < files.length; i++) {
                 let v = files[i];
-                console.log(v);
+
                 let p = resolve(temp, v);
                 let status = statSync(p);
                 if (status.isDirectory()) continue;

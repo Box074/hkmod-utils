@@ -85,7 +85,8 @@ program.command("build [projectFile]")
                 console.log(parse(outDLL).base + ": " + createHash("sha256").update(readFileSync(outDLL)).digest("hex"));
             }
         } else {
-            program.error("Build failed");
+            console.dir(result);
+            program.error(result.stderr + "\nBuild failed");
         }
 
 

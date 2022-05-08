@@ -1,6 +1,6 @@
 {
     "name": "hkmod-utils",
-    "version": "0.1.0",
+    "version": "0.1.6",
     "type": "module",
     "dependencies": {
         "commander": "^9.2.0",
@@ -13,8 +13,7 @@
     },
     "scripts": {
         "build": "tsc & dotnet build ./HKModUtils.sln",
-        "publising": "tsc & dotnet build ./HKModUtils.sln",
-        "install": "build.js"
+        "publising": "tsc & dotnet build ./HKModUtils.sln"
     },
     "devDependencies": {
         "@types/node": "^17.0.31",

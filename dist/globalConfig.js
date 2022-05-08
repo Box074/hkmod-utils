@@ -25,7 +25,7 @@ export class GlobalConfigManager {
     static tryGetUrl(url) {
         let config = this.loadConfig();
         let u = new URL(url);
-        let f = config.redirectDependency[u.host];
+        let f = config.redirectHost[u.host];
         if (f == undefined)
             return u;
         u.host = f;

@@ -44,7 +44,7 @@ export class HKToolManager {
                 project.dependencies.push(hr);
             }
             hr.name = "HKTool";
-            hr.url = "https://github.com/HKLab/HollowKnightMod.Tool/releases/latest/download/HKTool.zip";
+            hr.url = "https://github.com/HKLab/HollowKnightMod.Tool/releases/latest/download/Output.zip";
         }
     }
     public static async onModifyIL(outpath: string, project: Project, cache: ProjectCache) {
