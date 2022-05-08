@@ -1,0 +1,23 @@
+{
+    "name": "hkmod-utils",
+    "version": "0.1.0",
+    "type": "module",
+    "dependencies": {
+        "commander": "^9.2.0",
+        "compressing": "^1.5.1",
+        "got": "^12.0.4"
+    },
+    "main": "./dist/hkmod.js",
+    "bin": {
+        "hkmod": "./hkmod.js"
+    },
+    "scripts": {
+        "build": "tsc & dotnet build ./HKModUtils.sln",
+        "publising": "tsc & dotnet build ./HKModUtils.sln",
+        "install": "build.js"
+    },
+    "devDependencies": {
+        "@types/node": "^17.0.31",
+        "typescript": "^4.6.4"
+    }
+}
