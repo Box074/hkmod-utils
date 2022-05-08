@@ -1,109 +1,98 @@
-import { program } from "commander";
-import { readFileSync, writeFileSync, mkdirSync, existsSync, rm, readdirSync, copyFileSync, rmdirSync, rmSync, statSync } from "fs";
+import { readFileSync, writeFileSync, mkdirSync, existsSync, rm, readdirSync, copyFileSync, rmSync, statSync } from "fs";
 import { dirname, extname, join, parse, resolve } from "path";
 import { URL } from "url";
 import { createHash, randomUUID } from "crypto";
 import { tmpdir } from "os";
 import * as compressing from "compressing";
-import { HKToolConfig, HKToolManager } from "./hktool.js";
+import { HKToolManager } from "./hktool.js";
 import got from "got";
-import { GlobalConfigManager } from "./globalConfig.js";
-
-async function downloadFile(url: string) {
+import { GlobalConfigManager } from "../globalConfig.js";
+async function downloadFile(url) {
     let g = GlobalConfigManager.tryGet(url);
-    if (g !== null) return g;
-    return new Promise<Buffer>(async (resolve, rejects) => {
+    if (g !== null)
+        return g;
+    return new Promise(async (resolve, rejects) => {
         let g = await got({
             url: GlobalConfigManager.tryGetUrl(url),
             responseType: "buffer"
         });
         if (g.statusCode == 200) {
             resolve(g.body);
-        } else {
+        }
+        else {
             rejects(g.statusMessage);
         }
-
     });
-
 }
-
-
 export class ProjectDependency {
-    public name: string = "";
-    public url: string = "";
-    public ignoreFiles: string[] | undefined = undefined;
-    public copyToOutput: boolean | undefined = true;
+    name = "";
+    url = "";
+    ignoreFiles = undefined;
+    copyToOutput = true;
 }
-
 export class CSProjectItem {
-    public constructor(name: string = "", content: string | CSProjectItem[] | undefined = undefined, attr: {} = {}) {
+    constructor(name = "", content = undefined, attr = {}) {
         this.name = name;
         this.content = content;
         this.attr = attr;
     }
-    public name: string = "";
-    public content: string | CSProjectItem[] | undefined = undefined;
-    public attr: {};
+    name = "";
+    content = undefined;
+    attr;
 }
-
 export class CSProjectTemplate {
-    public itemGroup: CSProjectItem = { name: "ItemGroup", content: [], attr: {} };
-    public propertyGroup: CSProjectItem = { name: "PropertyGroup", content: [], attr: {} };
+    itemGroup = { name: "ItemGroup", content: [], attr: {} };
+    propertyGroup = { name: "PropertyGroup", content: [], attr: {} };
 }
-
 export class Project {
-    public modName: string = "";
-    public modVersion: string = "0.0.0.0";
-    public codeDir: string = "./scripts";
-    public csCompileInfo: boolean = true;
-    public dependencies: ProjectDependency[] = [];
-    public hktool: HKToolConfig | null = null;
-    public csproj: CSProjectTemplate = new CSProjectTemplate();
-    public enableNullableCheck: boolean = true;
-    public resources: {} = {};
+    modName = "";
+    modVersion = "0.0.0.0";
+    codeDir = "./scripts";
+    csCompileInfo = true;
+    hktool = null;
+    enableNullableCheck = true;
+    resources = {};
+    dependencies = [];
+    csproj = new CSProjectTemplate();
+    bindingLogger = [];
 }
-
 export class ProjectDependencyCache {
-    public name: string = "";
-    public url: string = "";
-    public md5: {} = {};
-    public files: {} = {};
+    name = "";
+    url = "";
+    md5 = {};
+    files = {};
 }
-
 export class ProjectCache {
-    public cacheRoot: string = "";
-    public dependencies: ProjectDependencyCache[] = [];
+    cacheRoot = "";
+    dependencies = [];
 }
-
 export class ProjectDependenciesManager {
-    public static getMD5(path: string): string {
-        if (!existsSync(path)) return "";
+    static getMD5(path) {
+        if (!existsSync(path))
+            return "";
         return createHash("md5").update(readFileSync(path)).digest("hex");
     }
-    public static getMD5FromBuffer(buffer: Buffer) {
+    static getMD5FromBuffer(buffer) {
         return createHash("md5").update(buffer).digest("hex");
     }
-    public static async downloadDependencies(item: ProjectDependency, cache: ProjectDependencyCache, cacheRoot: string) {
+    static async downloadDependencies(item, cache, cacheRoot) {
         cache.url = item.url;
-
         var data = await downloadFile(cache.url);
         var ignoreFiles = item.ignoreFiles || [];
         var path = new URL(cache.url).pathname;
         if (path.endsWith(".zip")) {
             var temp = join(tmpdir(), randomUUID());
             mkdirSync(temp);
-            
             var zipFile = join(tmpdir(), randomUUID() + ".zip");
             writeFileSync(zipFile, data);
             await compressing.zip.uncompress(zipFile, temp);
-            
             let files = readdirSync(temp);
             for (let i = 0; i < files.length; i++) {
                 let v = files[i];
-
                 let p = resolve(temp, v);
                 let status = statSync(p);
-                if (status.isDirectory()) continue;
+                if (status.isDirectory())
+                    continue;
                 if (ignoreFiles.indexOf(parse(v).base) != -1) {
                     continue;
                 }
@@ -124,11 +113,11 @@ export class ProjectDependenciesManager {
             writeFileSync(p, data);
         }
     }
-    public static async checkProject(cache: ProjectCache, project: Project) {
-        return new Promise<void>((resolve, rejects) => {
+    static async checkProject(cache, project) {
+        return new Promise((resolve, rejects) => {
             this.cleanupCache(cache, project);
             var count = 0;
-            async function missing(item: ProjectDependencyCache, element: ProjectDependency) {
+            async function missing(item, element) {
                 ProjectDependenciesManager.removeDependency(item);
                 count++;
                 await ProjectDependenciesManager.downloadDependencies(element, item, cache.cacheRoot);
@@ -141,8 +130,6 @@ export class ProjectDependenciesManager {
             if (apiU == null) {
                 apiU = new ProjectDependency();
                 project.dependencies.push(apiU);
-
-
             }
             apiU.name = "Modding API";
             apiU.url = "https://github.com/hk-modding/api/releases/latest/download/ModdingApiWin.zip";
@@ -157,8 +144,6 @@ export class ProjectDependenciesManager {
             if (baseU == null) {
                 baseU = new ProjectDependency();
                 project.dependencies.push(baseU);
-
-
             }
             baseU.name = "Vanilla";
             baseU.url = "https://files.catbox.moe/i4sdl6.zip";
@@ -169,9 +154,10 @@ export class ProjectDependenciesManager {
             ];
             baseU.copyToOutput = false;
             HKToolManager.onCheckDependencies(project);
-            project.dependencies.forEach(async element => {
+            project.dependencies.forEach(async (element) => {
                 var dep = cache.dependencies.find((val, i, obj) => {
-                    if (val.name == element.name) return true;
+                    if (val.name == element.name)
+                        return true;
                     return false;
                 });
                 if (!dep) {
@@ -193,11 +179,13 @@ export class ProjectDependenciesManager {
                     }
                 }
             });
-            if (count == 0) resolve();
+            if (count == 0)
+                resolve();
         });
     }
-    public static removeDependency(cache: ProjectDependencyCache) {
-        if (cache == null) return;
+    static removeDependency(cache) {
+        if (cache == null)
+            return;
         Object.keys(cache.md5).forEach((val, i, array) => {
             if (existsSync(val)) {
                 rm(val, (err) => { });
@@ -206,8 +194,8 @@ export class ProjectDependenciesManager {
         cache.md5 = {};
         cache.files = {};
     }
-    public static cleanupCache(cache: ProjectCache, project: Project) {
-        var newTable: any[] = [];
+    static cleanupCache(cache, project) {
+        var newTable = [];
         for (var i = 0; i < cache.dependencies.length; i++) {
             var val = cache.dependencies[i];
             if (project.dependencies.findIndex((v) => v != null && v.name == val.name) == -1) {
@@ -220,14 +208,11 @@ export class ProjectDependenciesManager {
         cache.dependencies = newTable;
     }
 }
-
 export class ProjectManager {
-    public static async getLibraries(project: Project, cache: ProjectCache): Promise<{ name: string; path: string; copy: boolean; }[]> {
-        var refs: { name: string; path: string; copy: boolean; }[] = [];
+    static async getLibraries(project, cache) {
+        var refs = [];
         //Dependencies
-
         await ProjectDependenciesManager.checkProject(cache, project);
-
         for (let index = 0; index < project.dependencies.length; index++) {
             const element = project.dependencies[index];
             if (element.copyToOutput == undefined) {
@@ -249,29 +234,29 @@ export class ProjectManager {
         }
         return refs;
     }
-    public static loadProject(path: string | null = null): Project {
+    static loadProject(path = null) {
         if (path == null) {
             path = "./modProject.json";
         }
         return JSON.parse(readFileSync(resolve(path), "utf-8"));
     }
-    public static saveProject(project: Project, path: string | null = null) {
+    static saveProject(project, path = null) {
         if (path == null) {
             path = "./modProject.json";
         }
         writeFileSync(resolve(path), JSON.stringify(project, null, 4));
     }
-    public static loadProjectCache(path: string | null = null): ProjectCache {
+    static loadProjectCache(path = null) {
         if (path == null) {
             path = "./modProject.json";
         }
         var cachePath = resolve(join(dirname(resolve(path)), "projectCache.json"));
-        var cache = existsSync(cachePath) ? JSON.parse(readFileSync(cachePath, "utf-8")) as ProjectCache : new ProjectCache();
+        var cache = existsSync(cachePath) ? JSON.parse(readFileSync(cachePath, "utf-8")) : new ProjectCache();
         cache.cacheRoot = resolve(join(dirname(cachePath), "caches"));
         mkdirSync(cache.cacheRoot, { recursive: true });
         return cache;
     }
-    public static saveProjectCache(cache: ProjectCache, path: string | null = null) {
+    static saveProjectCache(cache, path = null) {
         if (path == null) {
             path = "./modProject.json";
         }

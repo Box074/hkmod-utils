@@ -6,14 +6,21 @@ import { createHash } from "crypto";
 import { createWriteStream, existsSync, mkdir, mkdirSync, readdirSync, readFileSync, rm, rmSync, writeFileSync } from "fs";
 import * as http from "http";
 import { dirname, join, parse, resolve } from "path";
-import { BuildManager } from "./build.js";
-import { CSProjectManager } from "./csproj.js";
+import { BuildManager } from "./project/build.js";
+import { CSProjectManager } from "./project/csproj.js";
 import { GlobalConfigManager } from "./globalConfig.js";
-import { HKToolManager } from "./hktool.js";
-import { CSProjectItem, CSProjectTemplate, Project, ProjectDependenciesManager, ProjectDependency, ProjectDependencyCache, ProjectManager } from "./project.js";
-import { copyTemplateTo } from "./projectTemplate.js";
+import { HKToolManager } from "./project/hktool.js";
+import { CSProjectItem, CSProjectTemplate, Project, ProjectDependenciesManager, ProjectDependency, ProjectDependencyCache, ProjectManager } from "./project/project.js";
+import { copyTemplateTo } from "./project/projectTemplate.js";
+import { ModLogTrack } from "./utils/modlogTrack.js";
 
 program.version("0.0.1")
+program.command("modlog [modlogPath]")
+    .option("-P, --project <projectFile>", undefined, "./modProject.json")
+    .option("-WS, --webSocket")
+    .action((path: string | undefined, options: {}) => {
+        ModLogTrack.Init(path, options);
+    });
 let c_redirect = program.command("redirect");
 c_redirect.command("url")
     .argument("<url>")

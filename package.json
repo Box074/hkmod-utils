@@ -3,6 +3,7 @@
     "version": "0.1.6",
     "type": "module",
     "dependencies": {
+        "colors": "^1.4.0",
         "commander": "^9.2.0",
         "compressing": "^1.5.1",
         "got": "^12.0.4"
