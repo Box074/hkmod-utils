@@ -55,7 +55,11 @@ program.command("build [projectFile]")
         ProjectDependenciesManager.cleanupCache(cache, project);
         project.csproj = project.csproj || new CSProjectTemplate();
         let outDir = resolve(projectFile || ".", "Output");
-        if (existsSync(outDir)) rmSync(outDir, { recursive: true });
+        try {
+            if (existsSync(outDir)) rmSync(outDir, { recursive: true });
+        } catch (e) {
+
+        }
         mkdirSync(outDir, { recursive: true });
 
         let csprojDir = await BuildManager.generateBuildEnv(project, cache, outDir);

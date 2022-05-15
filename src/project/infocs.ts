@@ -2,7 +2,8 @@ import { Project } from "./project.js";
 
 export function generateCSInfo(project: Project): string {
     function mkclass(name: string, obj: {}, space: string = "", first: boolean = false, skip: string[] = []): string {
-        let s = space + "internal static class " + name + "\n"+ space + "{\n";
+        let s = space + "[System.Runtime.CompilerServices.CompilerGeneratedAttribute]\n[System.Runtime.CompilerServices.DiscardableAttribute]\n";
+        s += space + "internal static class " + name + "\n"+ space + "{\n";
         let memberSpace = space + "    ";
         let hasElement = false;
         if(first) {
@@ -16,6 +17,7 @@ export function generateCSInfo(project: Project): string {
             if(skip.includes(key)) continue;
             let n = key.replaceAll(/[A-Z]/g, (match) => "_" + match)
                 .replaceAll(" ", "")
+                .replaceAll(".", "_")
                 .toUpperCase()
                 
             if(!isNaN(parseInt(n))) {

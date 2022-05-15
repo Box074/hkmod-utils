@@ -5,9 +5,9 @@ public static class Program
     {
         public AssemblyResolver(string[] assemblys, string ignore)
         {
-            foreach(var v in assemblys)
+            foreach (var v in assemblys)
             {
-                if(v == ignore) continue;
+                if (v == ignore) continue;
                 var ass = AssemblyDefinition.ReadAssembly(new MemoryStream(File.ReadAllBytes(v)));
                 assemblyMap.Add(ass.Name.Name, ass);
             }
@@ -15,17 +15,17 @@ public static class Program
         public Dictionary<string, AssemblyDefinition> assemblyMap = new();
         AssemblyDefinition IAssemblyResolver.Resolve(AssemblyNameReference name)
         {
-            if(assemblyMap.TryGetValue(name.Name, out var v)) return v;
+            if (assemblyMap.TryGetValue(name.Name, out var v)) return v;
             return null;
         }
         AssemblyDefinition IAssemblyResolver.Resolve(AssemblyNameReference name, ReaderParameters rp)
         {
-            if(assemblyMap.TryGetValue(name.Name, out var v)) return v;
+            if (assemblyMap.TryGetValue(name.Name, out var v)) return v;
             return null;
         }
         void IDisposable.Dispose()
         {
-            foreach(var v in assemblyMap.Values) v.Dispose();
+            foreach (var v in assemblyMap.Values) v.Dispose();
         }
     }
     static void Main(string[] args)

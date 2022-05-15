@@ -2,7 +2,7 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from "fs";
 import { dirname, join, resolve } from "path";
 import { Project } from "./project.js";
 
-const template = join(dirname(new URL(import.meta.url).pathname.substring(1)), "..", "template");
+const template = join(dirname(new URL(import.meta.url).pathname.substring(1)), "..", "..", "template");
 
 export function copyTemplateTo(dest: string, project: Project) {
     dest = resolve(dest);

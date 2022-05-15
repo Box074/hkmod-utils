@@ -1,6 +1,7 @@
 export function generateCSInfo(project) {
     function mkclass(name, obj, space = "", first = false, skip = []) {
-        let s = space + "internal static class " + name + "\n" + space + "{\n";
+        let s = space + "[System.Runtime.CompilerServices.CompilerGeneratedAttribute]\n[System.Runtime.CompilerServices.DiscardableAttribute]\n";
+        s += space + "internal static class " + name + "\n" + space + "{\n";
         let memberSpace = space + "    ";
         let hasElement = false;
         if (first) {
@@ -14,6 +15,7 @@ export function generateCSInfo(project) {
                 continue;
             let n = key.replaceAll(/[A-Z]/g, (match) => "_" + match)
                 .replaceAll(" ", "")
+                .replaceAll(".", "_")
                 .toUpperCase();
             if (!isNaN(parseInt(n))) {
                 n = "Item" + n;
