@@ -1,6 +1,6 @@
 export function generateCSInfo(project) {
     function mkclass(name, obj, space = "", first = false, skip = []) {
-        let s = space + "[System.Runtime.CompilerServices.CompilerGeneratedAttribute]\n[System.Runtime.CompilerServices.DiscardableAttribute]\n";
+        let s = space + "[System.Runtime.CompilerServices.CompilerGeneratedAttribute]\n\n";
         s += space + "internal static class " + name + "\n" + space + "{\n";
         let memberSpace = space + "    ";
         let hasElement = false;
@@ -23,6 +23,10 @@ export function generateCSInfo(project) {
             if (typeof (v) == "string") {
                 hasElement = true;
                 s += memberSpace + "internal const string " + n + " = @\"" + v + "\";\n";
+            }
+            else if (typeof (v) == "number") {
+                hasElement = true;
+                s += memberSpace + "internal const int " + n + " = " + v + ";\n";
             }
             else if (typeof (v) == "boolean") {
                 hasElement = true;

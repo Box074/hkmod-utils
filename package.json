@@ -1,6 +1,7 @@
 {
     "name": "hkmod-utils",
-    "version": "0.1.9",
+    "version": "0.1.13",
+    "repository": "github:HKLab/hkmod-utils",
     "type": "module",
     "dependencies": {
         "colors": "^1.4.0",

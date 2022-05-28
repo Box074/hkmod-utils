@@ -134,7 +134,7 @@ program.command("initTemplate [projectFile]")
         let project = ProjectManager.loadProject(proj);
         copyTemplateTo(dirname(resolve(proj)), project);
     });
-var c_dep = program.command("dependency");
+var c_dep = program.command("dependency").alias("dep");
 c_dep.command("add")
     .argument("<url>")
     .option("-N, --name <name>")
