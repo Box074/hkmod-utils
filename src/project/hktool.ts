@@ -12,6 +12,7 @@ export class HKToolConfig {
     public referenceLib: boolean = true;
     public compressResources: boolean = true;
     public modifyIL: boolean = true;
+    public inlineHook: boolean = true;
     public modRes: {} = {};
 }
 
@@ -162,7 +163,7 @@ export class HKToolManager {
     public static async onModifyIL(outpath: string, project: Project, cache: ProjectCache) {
         if (!project.hktool?.modifyIL) return;
         let libraries = await ProjectManager.getLibraries(project, cache);
-        let args = [join(dirname(new URL(import.meta.url).pathname.substring(1)), "..", "..", "bin", "net6.0", "ILModify.dll"), outpath];
+        let args = [ join(dirname(new URL(import.meta.url).pathname.substring(1)), "..", "..", "bin", "net6.0", "ILModify.dll"), project.hktool.inlineHook ? "1" : "0", outpath];
         for (let i = 0; i < libraries.length; i++) {
             args.push(libraries[i].path);
         }

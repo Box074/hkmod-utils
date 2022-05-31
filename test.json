@@ -1,0 +1,13 @@
+{
+    "$schema": "./schemca/modProject.json",
+    "modName": "",
+    "modVersion": "",
+    "codeDir": "",
+    "csCompileInfo": true,
+    "dependencies": [
+
+    ],
+    "hktool": {
+        
+    }
+}

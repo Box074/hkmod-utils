@@ -48,6 +48,7 @@ export class Project {
     modName = "";
     modVersion = "0.0.0.0";
     codeDir = "./scripts";
+    libraryDir = "./library";
     csCompileInfo = true;
     hktool = null;
     enableNullableCheck = true;
@@ -230,6 +231,17 @@ export class ProjectManager {
                         });
                     }
                 }
+            }
+        }
+        if (project.libraryDir && existsSync(project.libraryDir)) {
+            let files = readdirSync(project.libraryDir, "utf8");
+            for (let i = 0; i < files.length; i++) {
+                const file = resolve(project.libraryDir, files[i]);
+                refs.push({
+                    name: parse(file).name,
+                    path: file,
+                    copy: true
+                });
             }
         }
         return refs;

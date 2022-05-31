@@ -55,8 +55,9 @@ export class Project {
     public modName: string = "";
     public modVersion: string = "0.0.0.0";
     public codeDir: string = "./scripts";
+    public libraryDir: string | undefined = "./library";
     public csCompileInfo: boolean = true;
-    public hktool: HKToolConfig | null = null;
+    public hktool: HKToolConfig | undefined = undefined;
     public enableNullableCheck: boolean = true;
     public resources: {} = {};
     public dependencies: ProjectDependency[] = [];
@@ -248,6 +249,17 @@ export class ProjectManager {
                 }
             }
         }
+        if(project.libraryDir && existsSync(project.libraryDir)) {
+            let files = readdirSync(project.libraryDir, "utf8");
+            for (let i = 0; i < files.length; i++) {
+                const file = resolve(project.libraryDir, files[i]);
+                refs.push({
+                    name: parse(file).name,
+                    path: file,
+                    copy: true
+                });
+            }
+        }
         return refs;
     }
     public static loadProject(path: string | null = null): Project {
@@ -260,6 +272,7 @@ export class ProjectManager {
         if (path == null) {
             path = "./modProject.json";
         }
+        project["$schema"] = "";
         writeFileSync(resolve(path), JSON.stringify(project, null, 4));
     }
     public static loadProjectCache(path: string | null = null): ProjectCache {
