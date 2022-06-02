@@ -41,6 +41,6 @@ export function generateCSInfo(project: Project): string {
         return hasElement ? s : "";
     }
     return mkclass("CompileInfo", project, "", true, [
-        "dependencies", "csproj", "csCompileInfo", "resources"
+        "dependencies", "csproj", "csCompileInfo", "resources", "$schema"
     ]);
 }

@@ -147,7 +147,18 @@
             "type": "object"
         },
         "dependencies": {
-            "type": "array"
+            "type": "array",
+            "properties": {
+                "name": {
+                    "type": "string"
+                },
+                "url": {
+                    "type": "string"
+                },
+                "ignoreFiles": {
+                    "type": "array"
+                }
+            }
         },
         "csproj": {
             "type": "object"

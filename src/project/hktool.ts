@@ -124,7 +124,7 @@ resTypes["ab"] = resTypes.assetbundle;
 resTypes["asset"] = resTypes.assetbundle;
 
 export class HKToolManager {
-    public static onProcessingResources(config: HKToolConfig | null, res: string) {
+    public static onProcessingResources(config: HKToolConfig | undefined, res: string) {
         if (config == null) return;
         if (!existsSync(res)) return;
         if (config.compressResources) {

@@ -1,6 +1,7 @@
 
 public static partial class Program
 {
+    public static int id = 0;
     public static Dictionary<string, TypeReference> delegateMap = new();
     public static void TryCheckIH(Instruction il, MethodDefinition md)
     {
@@ -10,34 +11,20 @@ public static partial class Program
             if (!mr.DeclaringType.FullName.StartsWith("On.") && !mr.DeclaringType.FullName.StartsWith("IL.")) return;
 
             mr.DeclaringType = ConvertHookDelegate(mr.DeclaringType, md.Module, out var repalced);
-            
-            if(mr.Name == "Invoke" && repalced)
+            if (repalced)
             {
-                // throw new Exception(mr.FullName);
-                for(int i = 0; i < mr.Parameters.Count; i++)
-                {
-                    mr.Parameters[i].Name = "arg" + i;
-                    mr.Parameters[i].ParameterType = mr.DeclaringType.Resolve().GenericParameters[i];
-                }
-                if(mr.DeclaringType.FullName.StartsWith("System.Func"))
-                {
-                    mr.ReturnType = mr.DeclaringType.Resolve().GenericParameters[mr.DeclaringType.Resolve().GenericParameters.Count - 1];
-                    //mr.ReturnType = md.Module.TypeSystem.Void;
-                }
+                il.Operand = mr.DeclaringType.Resolve().Methods.First(x => x.Name == mr.Name);
+                return;
             }
-            
-            il.Operand = md.Module.ImportReference(mr);
-            if(mr.Name != ".ctor") CheckIH(mr, il, md);
+            if (mr.Name.StartsWith("add_") || mr.Name.StartsWith("remove_")) CheckIH(mr, il, md);
         }
     }
     public static void CheckIH(MethodReference mr, Instruction il, MethodDefinition md)
     {
         if (!inlineHook) return;
+
         var rmd = mr.Resolve();
         if (rmd?.Body == null) return;
-        var ass = rmd.Module.Assembly;
-        if (!ass.Name.Name.StartsWith("MMHOOK_")) return;
-
         var compilerHelper = FindType(CompilerHelperFullName, md.Module);
 
         var method = (MethodReference)rmd.Body.Instructions.First(x => x.OpCode == OpCodes.Ldtoken).Operand;
@@ -48,12 +35,17 @@ public static partial class Program
         var helperMethod = "Hook_" + callMethod.Name;
         il.OpCode = OpCodes.Ldtoken;
         il.Operand = md.Module.ImportReference(method);
+        if(!method.Resolve().HasBody)
+        {
+            throw new NotSupportedException($"Body-less method {mr.FullName}");
+        }
         md.Body.GetILProcessor().InsertAfter(il,
             Instruction.Create(OpCodes.Call, md.Module.ImportReference(compilerHelper.Methods.First(x => x.Name == helperMethod))));
     }
     public static TypeReference ConvertHookDelegate(TypeReference tr, ModuleDefinition md, out bool replaced)
     {
         replaced = false;
+        tr = md.ImportReference(tr);
         if (!inlineHook) return tr;
         if (!tr.FullName.StartsWith("On")) return tr;
         var td = tr.Resolve();
@@ -68,26 +60,80 @@ public static partial class Program
 
 
         var invoke = td.Methods.First(x => x.Name == "Invoke");
-        GenericInstanceType t;
-        if (invoke.ReturnType.FullName == "System.Void")
-        {
-            t = new GenericInstanceType(FindType("System.Action`" + invoke.Parameters.Count, md));
-            foreach (var v in invoke.Parameters)
-            {
-                t.GenericArguments.Add(md.ImportReference(ConvertHookDelegate(v.ParameterType, md, out _)));
-            }
-        }
-        else
-        {
-            t = new GenericInstanceType(FindType("System.Func`" + (invoke.Parameters.Count + 1), md));
-            foreach (var v in invoke.Parameters)
-            {
-                t.GenericArguments.Add(md.ImportReference(ConvertHookDelegate(v.ParameterType, md, out _)));
-            }
-            t.GenericArguments.Add(md.ImportReference(ConvertHookDelegate(invoke.ReturnType, md, out _)));
-        }
-        delegateMap.Add(tr.FullName, t);
+        var rt = GenerateDelegate(invoke, md);
+        delegateMap.Add(tr.FullName, rt);
         replaced = true;
-        return t;
+        return rt;
+    }
+    public static TypeDefinition GenerateDelegate(MethodDefinition invokeMethod, ModuleDefinition md)
+    {
+        TypeDefinition del = new TypeDefinition(
+            null, "MD_" + (id++),
+            TypeAttributes.NestedPublic | TypeAttributes.Sealed | TypeAttributes.Class,
+            md.ImportReference(FindType("System.MulticastDelegate", md))
+        );
+        MethodDefinition ctor = new MethodDefinition(
+            ".ctor",
+            MethodAttributes.Public | MethodAttributes.HideBySig | MethodAttributes.SpecialName | MethodAttributes.RTSpecialName | MethodAttributes.ReuseSlot,
+            md.TypeSystem.Void
+        )
+        {
+            ImplAttributes = MethodImplAttributes.Runtime | MethodImplAttributes.Managed,
+            HasThis = true
+        };
+        ctor.Parameters.Add(new ParameterDefinition(md.TypeSystem.Object));
+        ctor.Parameters.Add(new ParameterDefinition(md.TypeSystem.IntPtr));
+        ctor.Body = new MethodBody(ctor);
+        del.Methods.Add(ctor);
+
+        MethodDefinition invoke = new MethodDefinition(
+            "Invoke",
+            MethodAttributes.Public | MethodAttributes.Virtual | MethodAttributes.HideBySig | MethodAttributes.NewSlot,
+            ConvertHookDelegate(invokeMethod.ReturnType, md, out _)
+        )
+        {
+            ImplAttributes = MethodImplAttributes.Runtime | MethodImplAttributes.Managed,
+            HasThis = true
+        };
+        foreach (ParameterDefinition param in invokeMethod.Parameters)
+            invoke.Parameters.Add(new ParameterDefinition(
+                param.Name,
+                param.Attributes,
+                ConvertHookDelegate(param.ParameterType, md, out _)
+            ));
+        invoke.Body = new MethodBody(invoke);
+        del.Methods.Add(invoke);
+
+        MethodDefinition invokeBegin = new MethodDefinition(
+            "BeginInvoke",
+            MethodAttributes.Public | MethodAttributes.Virtual | MethodAttributes.HideBySig | MethodAttributes.NewSlot,
+            md.ImportReference(FindType("System.IAsyncResult", md))
+        )
+        {
+            ImplAttributes = MethodImplAttributes.Runtime | MethodImplAttributes.Managed,
+            HasThis = true
+        };
+        foreach (ParameterDefinition param in invoke.Parameters)
+            invokeBegin.Parameters.Add(new ParameterDefinition(param.Name, param.Attributes, ConvertHookDelegate(param.ParameterType, md, out _)));
+        invokeBegin.Parameters.Add(new ParameterDefinition("callback", ParameterAttributes.None, md.ImportReference(FindType("System.AsyncCallback", md))));
+        invokeBegin.Parameters.Add(new ParameterDefinition(null, ParameterAttributes.None, md.TypeSystem.Object));
+        invokeBegin.Body = new MethodBody(invokeBegin);
+        del.Methods.Add(invokeBegin);
+
+        MethodDefinition invokeEnd = new MethodDefinition(
+            "EndInvoke",
+            MethodAttributes.Public | MethodAttributes.Virtual | MethodAttributes.HideBySig | MethodAttributes.NewSlot,
+            md.TypeSystem.Object
+        )
+        {
+            ImplAttributes = MethodImplAttributes.Runtime | MethodImplAttributes.Managed,
+            HasThis = true
+        };
+        invokeEnd.Parameters.Add(new ParameterDefinition("result", ParameterAttributes.None, md.ImportReference(FindType("System.IAsyncResult", md))));
+        invokeEnd.Body = new MethodBody(invokeEnd);
+        del.Methods.Add(invokeEnd);
+
+        md.Types.Add(del);
+        return del;
     }
 }

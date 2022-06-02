@@ -9,3 +9,9 @@ global using System.Reflection;
 global using Mono.Cecil;
 global using Mono.Cecil.Cil;
 
+global using TypeAttributes = Mono.Cecil.TypeAttributes;
+global using MethodAttributes = Mono.Cecil.MethodAttributes;
+global using MethodImplAttributes = Mono.Cecil.MethodImplAttributes;
+global using ParameterAttributes = Mono.Cecil.ParameterAttributes;
+global using MethodBody = Mono.Cecil.Cil.MethodBody;
+

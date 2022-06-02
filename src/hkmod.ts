@@ -10,7 +10,7 @@ import { BuildManager } from "./project/build.js";
 import { CSProjectManager } from "./project/csproj.js";
 import { GlobalConfigManager } from "./globalConfig.js";
 import { HKToolManager } from "./project/hktool.js";
-import { CSProjectItem, CSProjectTemplate, Project, ProjectDependenciesManager, ProjectDependency, ProjectDependencyCache, ProjectManager } from "./project/project.js";
+import { CSProjectItem, CSProjectTemplate, Project, ProjectCache, ProjectDependenciesManager, ProjectDependency, ProjectDependencyCache, ProjectManager } from "./project/project.js";
 import { copyTemplateTo } from "./project/projectTemplate.js";
 import { ModLogTrack } from "./utils/modlogTrack.js";
 
@@ -154,6 +154,22 @@ c_dep.command("add")
         else {
             project.dependencies.push(item);
         }
+        await ProjectDependenciesManager.checkProject(cache, project);
+        ProjectManager.saveProjectCache(cache, options["project"]);
+        ProjectManager.saveProject(project, options["project"]);
+    });
+c_dep.command("refresh")
+    .argument("<name>")
+    .option("-P, --project <projectFile>", undefined, "./modProject.json")
+    .action(async (name, options) => {
+        var project = ProjectManager.loadProject(options["project"]);
+        var cache = ProjectManager.loadProjectCache(options["project"]);
+        project.dependencies = project.dependencies || [];
+        let dep = project.dependencies.find((val) => val.name == name);
+        if(!dep) return;
+        let depCache = ProjectDependenciesManager.findCache(cache, dep);
+        if(!depCache) return;
+        ProjectDependenciesManager.removeDependency(depCache);
         await ProjectDependenciesManager.checkProject(cache, project);
         ProjectManager.saveProjectCache(cache, options["project"]);
         ProjectManager.saveProject(project, options["project"]);

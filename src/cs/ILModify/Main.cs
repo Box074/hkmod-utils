@@ -8,14 +8,22 @@ public static partial class Program
         {
             foreach (var v in assemblys)
             {
-                if (v == ignore) continue;
-                var bytes = File.ReadAllBytes(v);
-                var ass = AssemblyDefinition.ReadAssembly(new MemoryStream(bytes), new ReaderParameters()
+                try
                 {
-                    AssemblyResolver = new AssemblyResolver()
-                });
-                assemblyMap.Add(ass.Name.Name, ass);
-                Program.assemblys[ass.Name.Name] = Assembly.Load(bytes);
+                    if (v == ignore) continue;
+                    var bytes = File.ReadAllBytes(v);
+                    var ass = AssemblyDefinition.ReadAssembly(new MemoryStream(bytes), new ReaderParameters()
+                    {
+                        AssemblyResolver = new AssemblyResolver()
+                    });
+                    assemblyMap.Add(ass.Name.Name, ass);
+                    Console.Error.WriteLine(ass.FullName);
+                    Program.assemblys[ass.Name.Name] = Assembly.Load(bytes);
+                }
+                catch (Exception)
+                {
+
+                }
             }
         }
         public AssemblyResolver()
@@ -39,43 +47,58 @@ public static partial class Program
         }
     }
     private static bool inlineHook = false;
+    private static bool onlyFixDep = false;
     static void Main(string[] args)
     {
         inlineHook = args[0] == "1";
+        onlyFixDep = args[0] == "2";
         var files = args.Skip(1).ToArray();
-        using (var ar = new AssemblyResolver(files, files[0]))
+        if (!onlyFixDep)
         {
-            var origAssembly = Assembly.Load(File.ReadAllBytes(files[0]));
-            assemblys.Add(origAssembly.GetName().Name, origAssembly);
-            using (var s = File.Open(files[0], FileMode.Open, FileAccess.ReadWrite, FileShare.ReadWrite))
-            using (var ad = AssemblyDefinition.ReadAssembly(s, new ReaderParameters()
+
+            using (var ar = new AssemblyResolver(files, files[0]))
             {
-                AssemblyResolver = ar,
-                SymbolReaderProvider = new DefaultSymbolReaderProvider(true)
-            }))
+                var origAssembly = Assembly.Load(File.ReadAllBytes(files[0]));
+                assemblys.Add(origAssembly.GetName().Name, origAssembly);
+                using (var s = File.Open(files[0], FileMode.Open, FileAccess.ReadWrite, FileShare.ReadWrite))
+                using (var ad = AssemblyDefinition.ReadAssembly(s, new ReaderParameters()
+                {
+                    AssemblyResolver = ar,
+                    SymbolReaderProvider = new DefaultSymbolReaderProvider(true)
+                }))
+                {
+
+                    ILModifyAssembly(ad);
+                    ad.Write(new WriterParameters()
+                    {
+                        SymbolWriterProvider = new DefaultSymbolWriterProvider()
+                    });
+                }
+            }
+        }
+        else
+        {
+            using (var s = File.Open(files[0], FileMode.Open, FileAccess.ReadWrite, FileShare.ReadWrite))
+            using (var ad = AssemblyDefinition.ReadAssembly(s))
             {
 
-                Console.WriteLine($"Pdb Type: {ad.MainModule.SymbolReader.GetType().FullName}");
                 ILModifyAssembly(ad);
-                ad.Write(new WriterParameters()
-                {
-                    SymbolWriterProvider = new DefaultSymbolWriterProvider()
-                });
+                ad.Write();
             }
         }
     }
     public static void ILModifyType(TypeDefinition type)
     {
         CheckCP(type, type.CustomAttributes);
-        foreach (var v in type.Methods) ILModify(v);
-        foreach (var v in type.NestedTypes.Where(x => !IsNoModify(x.CustomAttributes))) ILModifyType(v);
+        foreach (var v in type.Methods.ToArray()) ILModify(v);
+        foreach (var v in type.NestedTypes.Where(x => !IsNoModify(x.CustomAttributes)).ToArray()) ILModifyType(v);
 
-        foreach (var v in type.Fields.Where(x => !IsNoModify(x.CustomAttributes)))
+        foreach (var v in type.Fields.Where(x => !IsNoModify(x.CustomAttributes)).ToArray())
         {
             v.FieldType = type.Module.ImportReference(ConvertHookDelegate(v.FieldType, type.Module, out _));
             CheckCP(v, v.CustomAttributes);
         }
-        foreach (var v in type.Properties.Where(x => !IsNoModify(x.CustomAttributes)))
+        foreach (var v in type.Properties.Where(x => !IsNoModify(x.CustomAttributes)).ToArray())
         {
             CheckCP(v, v.CustomAttributes);
         }
@@ -110,12 +133,16 @@ public static partial class Program
     {
         foreach (var m in ass.Modules)
         {
-            foreach (var v in m.Types.Where(x => !IsNoModify(x.CustomAttributes))) ILModifyType(v);
-            var mscorlib = m.AssemblyReferences.FirstOrDefault(x => x.Name == "mscorlib");
-            for(int i = 0; i < m.AssemblyReferences.Count ; i++)
-            {   
+            if (!onlyFixDep)
+            {
+                foreach (var v in m.Types.ToArray().Where(x => !IsNoModify(x.CustomAttributes))) ILModifyType(v);
+            }
+            //throw null;
+            var mscorlib = m.AssemblyReferences.FirstOrDefault(x => x.Name == "mscorlib") ?? new("mscorlib", new Version(4, 0, 0, 0));
+            for (int i = 0; i < m.AssemblyReferences.Count; i++)
+            {
                 var a = m.AssemblyReferences[i];
-                if(a.Name.StartsWith("MMHOOK_") && inlineHook)
+                if (a.Name.StartsWith("MMHOOK_") && inlineHook)
                 {
                     m.AssemblyReferences.RemoveAt(i);
                     i--;
@@ -131,7 +158,7 @@ public static partial class Program
                     a.Culture = mscorlib.Culture;
                 }
             }
-            
+
         }
     }
 

@@ -148,6 +148,24 @@ c_dep.command("add")
     ProjectManager.saveProjectCache(cache, options["project"]);
     ProjectManager.saveProject(project, options["project"]);
 });
+c_dep.command("refresh")
+    .argument("<name>")
+    .option("-P, --project <projectFile>", undefined, "./modProject.json")
+    .action(async (name, options) => {
+    var project = ProjectManager.loadProject(options["project"]);
+    var cache = ProjectManager.loadProjectCache(options["project"]);
+    project.dependencies = project.dependencies || [];
+    let dep = project.dependencies.find((val) => val.name == name);
+    if (!dep)
+        return;
+    let depCache = ProjectDependenciesManager.findCache(cache, dep);
+    if (!depCache)
+        return;
+    ProjectDependenciesManager.removeDependency(depCache);
+    await ProjectDependenciesManager.checkProject(cache, project);
+    ProjectManager.saveProjectCache(cache, options["project"]);
+    ProjectManager.saveProject(project, options["project"]);
+});
 c_dep.command("remove")
     .argument("<name>")
     .option("-P, --project <projectFile>", undefined, "./modProject.json")

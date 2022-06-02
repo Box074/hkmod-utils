@@ -8,6 +8,8 @@ import * as compressing from "compressing";
 import { HKToolConfig, HKToolManager } from "./hktool.js";
 import got from "got";
 import { GlobalConfigManager } from "../globalConfig.js";
+import { exec, spawn, spawnSync } from "child_process";
+import { rejects } from "assert";
 
 async function downloadFile(url: string) {
     let g = GlobalConfigManager.tryGet(url);
@@ -31,8 +33,7 @@ async function downloadFile(url: string) {
 export class ProjectDependency {
     public name: string = "";
     public url: string = "";
-    public ignoreFiles: string[] | undefined = undefined;
-    public copyToOutput: boolean | undefined = true;
+    public ignoreFiles: string[] | undefined;
 }
 
 export class CSProjectItem {
@@ -70,6 +71,7 @@ export class ProjectDependencyCache {
     public url: string = "";
     public md5: {} = {};
     public files: {} = {};
+    public hooks: {} = {};
 }
 
 export class ProjectCache {
@@ -85,7 +87,42 @@ export class ProjectDependenciesManager {
     public static getMD5FromBuffer(buffer: Buffer) {
         return createHash("md5").update(buffer).digest("hex");
     }
-    public static async downloadDependencies(item: ProjectDependency, cache: ProjectDependencyCache, cacheRoot: string) {
+    public static async genHook(project: Project, cache: ProjectDependencyCache, cacheRoot: string) {
+        if (!project?.hktool?.inlineHook) return;
+        cache.hooks = cache.hooks || {};
+        return new Promise((resolve, rejects) => {
+            let count = 0;
+            for (const key in cache.files) {
+                if (Object.prototype.hasOwnProperty.call(cache.files, key)) {
+                    const element = cache.files[key];
+                    count++;
+                    let ls = spawn("dotnet",
+                        [join(dirname(new URL(import.meta.url).pathname.substring(1)), "..", "..", "bin", "monomod", "MonoMod.RuntimeDetour.HookGen.dll"), "--orig", "--private", element]);
+                    ls.on("exit", (code) => {
+                        let hookFile = join(parse(element).dir, "MMHOOK_" + parse(element).name + ".dll");
+                        console.log(hookFile);
+                        if (existsSync(hookFile)) {
+                            cache.hooks["MMHOOK_" + key] = hookFile;
+                            spawn("dotnet", [join(dirname(new URL(import.meta.url).pathname.substring(1)), "..", "..", "bin", "net6.0", "ILModify.dll"), "2", hookFile])
+                            .on("exit", (code2) => {
+                                count--;
+                                if (count <= 0) resolve(undefined);
+                            });
+                            /*console.log(
+                                spawnSync("dotnet", [join(dirname(new URL(import.meta.url).pathname.substring(1)), "..", "..", "bin", "net6.0", "ILModify.dll"), "2", hookFile], 
+                                {
+                                    "encoding": "ascii"
+                                }).output
+                            );*/
+                        }
+
+                    });
+
+                }
+            }
+        });
+    }
+    public static async downloadDependencies(project: Project, item: ProjectDependency, cache: ProjectDependencyCache, cacheRoot: string) {
         cache.url = item.url;
 
         var data = await downloadFile(cache.url);
@@ -94,11 +131,11 @@ export class ProjectDependenciesManager {
         if (path.endsWith(".zip")) {
             var temp = join(tmpdir(), randomUUID());
             mkdirSync(temp);
-            
+
             var zipFile = join(tmpdir(), randomUUID() + ".zip");
             writeFileSync(zipFile, data);
             await compressing.zip.uncompress(zipFile, temp);
-            
+
             let files = readdirSync(temp);
             for (let i = 0; i < files.length; i++) {
                 let v = files[i];
@@ -106,7 +143,7 @@ export class ProjectDependenciesManager {
                 let p = resolve(temp, v);
                 let status = statSync(p);
                 if (status.isDirectory()) continue;
-                if (ignoreFiles.indexOf(parse(v).base) != -1) {
+                if (ignoreFiles.indexOf(parse(v).base) != -1 || (project.hktool?.inlineHook && parse(v).base.startsWith("MMHOOK_"))) {
                     continue;
                 }
                 var md5 = this.getMD5(p);
@@ -125,6 +162,13 @@ export class ProjectDependenciesManager {
             cache.files[parse(path).base] = p;
             writeFileSync(p, data);
         }
+        await this.genHook(project, cache, cacheRoot);
+    }
+    public static findCache(cache: ProjectCache, dep: ProjectDependency): ProjectDependencyCache | undefined {
+        return cache.dependencies.find((val, i, obj) => {
+            if (val.name == dep.name) return true;
+            return false;
+        });
     }
     public static async checkProject(cache: ProjectCache, project: Project) {
         return new Promise<void>((resolve, rejects) => {
@@ -133,7 +177,7 @@ export class ProjectDependenciesManager {
             async function missing(item: ProjectDependencyCache, element: ProjectDependency) {
                 ProjectDependenciesManager.removeDependency(item);
                 count++;
-                await ProjectDependenciesManager.downloadDependencies(element, item, cache.cacheRoot);
+                await ProjectDependenciesManager.downloadDependencies(project, element, item, cache.cacheRoot);
                 count--;
                 if (count == 0) {
                     resolve();
@@ -143,33 +187,31 @@ export class ProjectDependenciesManager {
             if (apiU == null) {
                 apiU = new ProjectDependency();
                 project.dependencies.push(apiU);
-
+                apiU.name = "Modding API";
+                apiU.url = "https://github.com/hk-modding/api/releases/latest/download/ModdingApiWin.zip";
+                apiU.ignoreFiles = [
+                    "MMHOOK_PlayMaker.dll",
+                    "Mono.Cecil.dll",
+                    "MonoMod.RuntimeDetour.dll",
+                    "MonoMod.Utils.dll"
+                ];
 
             }
-            apiU.name = "Modding API";
-            apiU.url = "https://github.com/hk-modding/api/releases/latest/download/ModdingApiWin.zip";
-            apiU.ignoreFiles = [
-                "MMHOOK_PlayMaker.dll",
-                "Mono.Cecil.dll",
-                "MonoMod.RuntimeDetour.dll",
-                "MonoMod.Utils.dll"
-            ];
-            apiU.copyToOutput = false;
+
             var baseU = project.dependencies.find((val) => val.name == "Vanilla");
             if (baseU == null) {
                 baseU = new ProjectDependency();
                 project.dependencies.push(baseU);
-
+                baseU.name = "Vanilla";
+                baseU.url = "https://files.catbox.moe/i4sdl6.zip";
+                baseU.ignoreFiles = [
+                    "Assembly-CSharp.dll",
+                    "mscorlib.dll",
+                    "Newtonsoft.Json.dll"
+                ];
 
             }
-            baseU.name = "Vanilla";
-            baseU.url = "https://files.catbox.moe/i4sdl6.zip";
-            baseU.ignoreFiles = [
-                "Assembly-CSharp.dll",
-                "mscorlib.dll",
-                "Newtonsoft.Json.dll"
-            ];
-            baseU.copyToOutput = false;
+
             HKToolManager.onCheckDependencies(project);
             project.dependencies.forEach(async element => {
                 var dep = cache.dependencies.find((val, i, obj) => {
@@ -205,8 +247,15 @@ export class ProjectDependenciesManager {
                 rm(val, (err) => { });
             }
         });
+        if (cache.hooks) Object.keys(cache.hooks).forEach((val, i, array) => {
+            let fn = cache.hooks[val];
+            if (existsSync(fn)) {
+                rm(fn, (err) => { });
+            }
+        });
         cache.md5 = {};
         cache.files = {};
+        cache.hooks = {};
     }
     public static cleanupCache(cache: ProjectCache, project: Project) {
         var newTable: any[] = [];
@@ -232,9 +281,7 @@ export class ProjectManager {
 
         for (let index = 0; index < project.dependencies.length; index++) {
             const element = project.dependencies[index];
-            if (element.copyToOutput == undefined) {
-                element.copyToOutput = true;
-            }
+
             let c = cache.dependencies.find((val) => val.name == element.name);
             if (c != null) {
                 for (let v in c.files) {
@@ -243,13 +290,25 @@ export class ProjectManager {
                         refs.push({
                             name: p.name,
                             path: c.files[v],
-                            copy: element.copyToOutput
+                            copy: false
                         });
+                    }
+                }
+                if (c.hooks) {
+                    for (let v in c.hooks) {
+                        let p = parse(v);
+                        if (p.ext == ".dll") {
+                            refs.push({
+                                name: p.name,
+                                path: c.hooks[v],
+                                copy: false
+                            });
+                        }
                     }
                 }
             }
         }
-        if(project.libraryDir && existsSync(project.libraryDir)) {
+        if (project.libraryDir && existsSync(project.libraryDir)) {
             let files = readdirSync(project.libraryDir, "utf8");
             for (let i = 0; i < files.length; i++) {
                 const file = resolve(project.libraryDir, files[i]);
@@ -272,7 +331,7 @@ export class ProjectManager {
         if (path == null) {
             path = "./modProject.json";
         }
-        project["$schema"] = "";
+        project["$schema"] = "https://github.com/HKLab/hkmod-utils/raw/master/schemca/modProject.json";
         writeFileSync(resolve(path), JSON.stringify(project, null, 4));
     }
     public static loadProjectCache(path: string | null = null): ProjectCache {
