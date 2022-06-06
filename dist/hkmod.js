@@ -58,6 +58,8 @@ program.command("build [projectFile]")
     }
     mkdirSync(outDir, { recursive: true });
     let csprojDir = await BuildManager.generateBuildEnv(project, cache, outDir);
+    ProjectManager.saveProjectCache(cache, options["project"]);
+    ProjectManager.saveProject(project, options["project"]);
     let result = spawnSync("dotnet", ["build"], {
         cwd: csprojDir,
         encoding: "ascii"
@@ -90,8 +92,7 @@ program.command("build [projectFile]")
         }
     }
     else {
-        console.dir(result);
-        program.error(result.stderr + "\nBuild failed");
+        program.error(result.output.join() + "\nBuild failed");
     }
 });
 program.command("generateCsproj [outProject]")
@@ -186,3 +187,4 @@ c_dep.command("remove")
     ProjectManager.saveProject(project, options["project"]);
 });
 program.parse(process.argv);
+//# sourceMappingURL=hkmod.js.map

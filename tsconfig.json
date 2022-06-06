@@ -6,7 +6,8 @@
         "module": "ESNext",
         "moduleResolution": "node",
         "allowSyntheticDefaultImports": true,
-        "strictNullChecks": true
+        "strictNullChecks": true,
+        "sourceMap": true
     },
     "exclude": [
         "./dist"

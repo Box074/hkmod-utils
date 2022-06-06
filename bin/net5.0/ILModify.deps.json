@@ -1,17 +1,17 @@
 {
   "runtimeTarget": {
-    "name": ".NETCoreApp,Version=v6.0",
+    "name": ".NETCoreApp,Version=v5.0",
     "signature": ""
   },
   "compilationOptions": {},
   "targets": {
-    ".NETCoreApp,Version=v6.0": {
-      "HookGen/1.0.0": {
+    ".NETCoreApp,Version=v5.0": {
+      "ILModify/1.0.0": {
         "dependencies": {
           "Mono.Cecil": "0.11.4"
         },
         "runtime": {
-          "HookGen.dll": {}
+          "ILModify.dll": {}
         }
       },
       "Mono.Cecil/0.11.4": {
@@ -37,7 +37,7 @@
     }
   },
   "libraries": {
-    "HookGen/1.0.0": {
+    "ILModify/1.0.0": {
       "type": "project",
       "serviceable": false,
       "sha512": ""

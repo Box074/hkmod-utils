@@ -81,52 +81,50 @@
                                         },
                                         "sprites": {
                                             "type": "array",
-                                            "allOf": [
-                                                {
-                                                    "type": "object",
-                                                    "properties": {
-                                                        "name": {
-                                                            "type": "string"
-                                                        },
-                                                        "uv": {
-                                                            "type": "array",
-                                                            "minItems": 4,
-                                                            "maxItems": 4,
-                                                            "items": [
-                                                                {
-                                                                    "type": "number"
-                                                                }
-                                                            ]
-                                                        },
-                                                        "pixel": {
-                                                            "type": "array",
-                                                            "minItems": 4,
-                                                            "maxItems": 4,
-                                                            "items": [
-                                                                {
-                                                                    "type": "number"
-                                                                }
-                                                            ]
-                                                        },
-                                                        "pivot": {
-                                                            "type": "array",
-                                                            "minItems": 2,
-                                                            "maxItems": 2,
-                                                            "items": [
-                                                                {
-                                                                    "type": "number"
-                                                                }
-                                                            ]
-                                                        },
-                                                        "pixelsPerUnit": {
-                                                            "type": "number"
-                                                        }
+                                            "items": {
+                                                "type": "object",
+                                                "properties": {
+                                                    "name": {
+                                                        "type": "string"
                                                     },
-                                                    "required": [
-                                                        "name"
-                                                    ]
-                                                }
-                                            ]
+                                                    "uv": {
+                                                        "type": "array",
+                                                        "minItems": 4,
+                                                        "maxItems": 4,
+                                                        "items": [
+                                                            {
+                                                                "type": "number"
+                                                            }
+                                                        ]
+                                                    },
+                                                    "pixel": {
+                                                        "type": "array",
+                                                        "minItems": 4,
+                                                        "maxItems": 4,
+                                                        "items": [
+                                                            {
+                                                                "type": "number"
+                                                            }
+                                                        ]
+                                                    },
+                                                    "pivot": {
+                                                        "type": "array",
+                                                        "minItems": 2,
+                                                        "maxItems": 2,
+                                                        "items": [
+                                                            {
+                                                                "type": "number"
+                                                            }
+                                                        ]
+                                                    },
+                                                    "pixelsPerUnit": {
+                                                        "type": "number"
+                                                    }
+                                                },
+                                                "required": [
+                                                    "name"
+                                                ]
+                                            }
                                         }
                                     },
                                     "required": [

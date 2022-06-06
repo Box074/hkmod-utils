@@ -64,6 +64,9 @@ program.command("build [projectFile]")
 
         let csprojDir = await BuildManager.generateBuildEnv(project, cache, outDir);
 
+        ProjectManager.saveProjectCache(cache, options["project"]);
+        ProjectManager.saveProject(project, options["project"]);
+
         let result = spawnSync("dotnet", ["build"], {
             cwd: csprojDir,
             encoding: "ascii"
@@ -96,8 +99,7 @@ program.command("build [projectFile]")
                 console.log(parse(outDLL).base + ": " + createHash("sha256").update(readFileSync(outDLL)).digest("hex"));
             }
         } else {
-            console.dir(result);
-            program.error(result.stderr + "\nBuild failed");
+            program.error(result.output.join() + "\nBuild failed");
         }
 
 

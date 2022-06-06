@@ -10,6 +10,7 @@ import got from "got";
 import { GlobalConfigManager } from "../globalConfig.js";
 import { exec, spawn, spawnSync } from "child_process";
 import { rejects } from "assert";
+import { url } from "inspector";
 
 async function downloadFile(url: string) {
     let g = GlobalConfigManager.tryGet(url);
@@ -95,17 +96,20 @@ export class ProjectDependenciesManager {
             for (const key in cache.files) {
                 if (Object.prototype.hasOwnProperty.call(cache.files, key)) {
                     const element = cache.files[key];
+                    if(parse(key).ext != ".dll") continue;
                     count++;
                     let ls = spawn("dotnet",
                         [join(dirname(new URL(import.meta.url).pathname.substring(1)), "..", "..", "bin", "monomod", "MonoMod.RuntimeDetour.HookGen.dll"), "--orig", "--private", element]);
                     ls.on("exit", (code) => {
                         let hookFile = join(parse(element).dir, "MMHOOK_" + parse(element).name + ".dll");
-                        console.log(hookFile);
+                        
                         if (existsSync(hookFile)) {
                             cache.hooks["MMHOOK_" + key] = hookFile;
-                            spawn("dotnet", [join(dirname(new URL(import.meta.url).pathname.substring(1)), "..", "..", "bin", "net6.0", "ILModify.dll"), "2", hookFile])
+                            spawn("dotnet", [join(dirname(new URL(import.meta.url).pathname.substring(1)), "..", "..", "bin", "net5.0", "ILModify.dll"), "2", hookFile])
                             .on("exit", (code2) => {
                                 count--;
+                                console.error(hookFile);
+                                console.error("HookGen(" + count + "):" + key);
                                 if (count <= 0) resolve(undefined);
                             });
                             /*console.log(
@@ -124,8 +128,9 @@ export class ProjectDependenciesManager {
     }
     public static async downloadDependencies(project: Project, item: ProjectDependency, cache: ProjectDependencyCache, cacheRoot: string) {
         cache.url = item.url;
-
+        console.error("downloading: " + item.url);
         var data = await downloadFile(cache.url);
+        console.error("download finished: " + item.url);
         var ignoreFiles = item.ignoreFiles || [];
         var path = new URL(cache.url).pathname;
         if (path.endsWith(".zip")) {
@@ -173,12 +178,15 @@ export class ProjectDependenciesManager {
     public static async checkProject(cache: ProjectCache, project: Project) {
         return new Promise<void>((resolve, rejects) => {
             this.cleanupCache(cache, project);
-            var count = 0;
+            let count = 0;
+            let allCount = 0;
             async function missing(item: ProjectDependencyCache, element: ProjectDependency) {
                 ProjectDependenciesManager.removeDependency(item);
                 count++;
+                allCount++;
                 await ProjectDependenciesManager.downloadDependencies(project, element, item, cache.cacheRoot);
                 count--;
+                console.error("complete("+ (allCount - count) +"/" + allCount +"): " + element.name);
                 if (count == 0) {
                     resolve();
                 }

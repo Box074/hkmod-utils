@@ -18,3 +18,4 @@ export function copyTemplateTo(dest, project) {
     let readme = join(dest, "README.md");
     writeFileSync(join(readme), readFileSync(join(template, "README.md"), "utf-8").replaceAll("{{modName}}", project.modName), "utf-8");
 }
+//# sourceMappingURL=projectTemplate.js.map

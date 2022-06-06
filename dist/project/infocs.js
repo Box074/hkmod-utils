@@ -44,3 +44,4 @@ export function generateCSInfo(project) {
         "dependencies", "csproj", "csCompileInfo", "resources", "$schema"
     ]);
 }
+//# sourceMappingURL=infocs.js.map

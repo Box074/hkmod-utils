@@ -64,3 +64,4 @@ export class BuildManager {
         return dir;
     }
 }
+//# sourceMappingURL=build.js.map

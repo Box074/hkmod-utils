@@ -69,7 +69,7 @@ public static partial class Program
     {
         TypeDefinition del = new TypeDefinition(
             null, "MD_" + (id++),
-            TypeAttributes.NestedPublic | TypeAttributes.Sealed | TypeAttributes.Class,
+            TypeAttributes.NotPublic | TypeAttributes.Sealed | TypeAttributes.Class,
             md.ImportReference(FindType("System.MulticastDelegate", md))
         );
         MethodDefinition ctor = new MethodDefinition(
