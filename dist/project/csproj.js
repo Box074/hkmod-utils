@@ -48,7 +48,7 @@ export class CSProjectManager {
         proj += "\n</Project>";
         return proj;
     }
-    static async addDevOption(itemGroup, propertyGroup, project, cache) {
+    static async addDevOption(itemGroup, propertyGroup, project, cache, isBuild) {
         propertyGroup.push(new CSProjectItem("AssemblyName", project.modName), new CSProjectItem("TargetFramework", "net472"), new CSProjectItem("Version", project.modVersion), new CSProjectItem("EnableDefaultItems", "false"), new CSProjectItem("EnableDefaultCompileItems", "false"), new CSProjectItem("Nullable", project.enableNullableCheck ? "enable" : "disable"), new CSProjectItem("DebugType", "portable"), new CSProjectItem("OutputType", "Library"), new CSProjectItem("LangVersion", "preview"), new CSProjectItem("DebugSymbols", "true"), new CSProjectItem("Optimize", "true"));
         let dep = await ProjectManager.getLibraries(project, cache);
         for (let i = 0; i < dep.length; i++) {
@@ -66,7 +66,7 @@ export class CSProjectManager {
             let compileInfo = resolve(project.codeDir || "./scripts", "..", "caches", "CompileInfo.cs");
             let modRes = resolve(project.codeDir || "./scripts", "..", "caches", "ModResInfo.cs");
             writeFileSync(compileInfo, generateCSInfo(project), "utf-8");
-            writeFileSync(modRes, HKToolManager.generateResInfo(project), "utf-8");
+            writeFileSync(modRes, HKToolManager.generateResInfo(project, isBuild), "utf-8");
             itemGroup.push(new CSProjectItem("Compile", undefined, {
                 "Include": resolve(project.codeDir || "./scripts", "**", "*.cs")
             }), new CSProjectItem("Compile", undefined, {

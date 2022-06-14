@@ -9,6 +9,7 @@ export class HKToolConfig {
     compressResources = true;
     modifyIL = true;
     inlineHook = true;
+    externRes = true;
     modRes = {};
 }
 export class SpriteConfig {
@@ -165,7 +166,7 @@ export class HKToolManager {
             console.error(result.stderr);
         }
     }
-    static generateResInfo(project) {
+    static generateResInfo(project, isBuild) {
         if (!project.hktool?.modRes)
             return "";
         let res = project.hktool?.modRes;

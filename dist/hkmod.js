@@ -107,7 +107,7 @@ program.command("generateCsproj [outProject]")
     items = items.splice(0);
     var ps = project.csproj.propertyGroup.content;
     ps = ps.splice(0);
-    await CSProjectManager.addDevOption(items, ps, project, cache);
+    await CSProjectManager.addDevOption(items, ps, project, cache, false);
     writeFileSync(outProject, CSProjectManager.generateCSproj([new CSProjectItem("PropertyGroup", ps), new CSProjectItem("ItemGroup", items)]));
     ProjectManager.saveProjectCache(cache, options["project"]);
     ProjectManager.saveProject(project, options["project"]);

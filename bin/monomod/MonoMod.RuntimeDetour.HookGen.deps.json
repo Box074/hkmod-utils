@@ -6,12 +6,12 @@
   "compilationOptions": {},
   "targets": {
     ".NETCoreApp,Version=v5.0": {
-      "MonoMod.RuntimeDetour.HookGen/22.05.01.01": {
+      "MonoMod.RuntimeDetour.HookGen/22.06.09.00": {
         "dependencies": {
           "Mono.Cecil": "0.11.4",
-          "MonoMod": "22.5.1.1",
-          "MonoMod.RuntimeDetour": "22.5.1.1",
-          "MonoMod.Utils": "22.5.1.1",
+          "MonoMod": "22.6.9",
+          "MonoMod.RuntimeDetour": "22.6.9",
+          "MonoMod.Utils": "22.6.9",
           "System.Collections.NonGeneric": "4.3.0",
           "System.ComponentModel.TypeConverter": "4.3.0",
           "System.IO.FileSystem.Primitives": "4.3.0",
@@ -237,10 +237,10 @@
           "System.Runtime": "4.3.0"
         }
       },
-      "MonoMod/22.5.1.1": {
+      "MonoMod/22.6.9": {
         "dependencies": {
           "Mono.Cecil": "0.11.4",
-          "MonoMod.Utils": "22.5.1.1",
+          "MonoMod.Utils": "22.6.9",
           "System.Collections.NonGeneric": "4.3.0",
           "System.ComponentModel.TypeConverter": "4.3.0",
           "System.IO.FileSystem.Primitives": "4.3.0",
@@ -252,10 +252,10 @@
           "MonoMod.dll": {}
         }
       },
-      "MonoMod.RuntimeDetour/22.5.1.1": {
+      "MonoMod.RuntimeDetour/22.6.9": {
         "dependencies": {
           "Mono.Cecil": "0.11.4",
-          "MonoMod.Utils": "22.5.1.1",
+          "MonoMod.Utils": "22.6.9",
           "System.Collections.NonGeneric": "4.3.0",
           "System.ComponentModel.TypeConverter": "4.3.0",
           "System.IO.FileSystem.Primitives": "4.3.0",
@@ -267,7 +267,7 @@
           "MonoMod.RuntimeDetour.dll": {}
         }
       },
-      "MonoMod.Utils/22.5.1.1": {
+      "MonoMod.Utils/22.6.9": {
         "dependencies": {
           "Mono.Cecil": "0.11.4",
           "System.Collections.NonGeneric": "4.3.0",
@@ -284,7 +284,7 @@
     }
   },
   "libraries": {
-    "MonoMod.RuntimeDetour.HookGen/22.05.01.01": {
+    "MonoMod.RuntimeDetour.HookGen/22.06.09.00": {
       "type": "project",
       "serviceable": false,
       "sha512": ""
@@ -492,17 +492,17 @@
       "path": "system.threading.tasks/4.3.0",
       "hashPath": "system.threading.tasks.4.3.0.nupkg.sha512"
     },
-    "MonoMod/22.5.1.1": {
+    "MonoMod/22.6.9": {
       "type": "project",
       "serviceable": false,
       "sha512": ""
     },
-    "MonoMod.RuntimeDetour/22.5.1.1": {
+    "MonoMod.RuntimeDetour/22.6.9": {
       "type": "project",
       "serviceable": false,
       "sha512": ""
     },
-    "MonoMod.Utils/22.5.1.1": {
+    "MonoMod.Utils/22.6.9": {
       "type": "project",
       "serviceable": false,
       "sha512": ""

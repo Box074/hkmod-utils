@@ -47,7 +47,7 @@ export class CSProjectManager {
         proj += "\n</Project>"
         return proj;
     }
-    public static async addDevOption(itemGroup: CSProjectItem[], propertyGroup: CSProjectItem[], project: Project, cache: ProjectCache) {
+    public static async addDevOption(itemGroup: CSProjectItem[], propertyGroup: CSProjectItem[], project: Project, cache: ProjectCache, isBuild: Boolean) {
         propertyGroup.push(
             new CSProjectItem("AssemblyName", project.modName),
             new CSProjectItem("TargetFramework", "net472"),
@@ -81,7 +81,7 @@ export class CSProjectManager {
             let compileInfo = resolve(project.codeDir || "./scripts", "..", "caches", "CompileInfo.cs");
             let modRes = resolve(project.codeDir || "./scripts", "..", "caches", "ModResInfo.cs");
             writeFileSync(compileInfo, generateCSInfo(project), "utf-8");
-            writeFileSync(modRes, HKToolManager.generateResInfo(project), "utf-8");
+            writeFileSync(modRes, HKToolManager.generateResInfo(project, isBuild), "utf-8");
             itemGroup.push(
                 new CSProjectItem("Compile", undefined, {
                     "Include": resolve(project.codeDir || "./scripts", "**", "*.cs")

@@ -32,6 +32,9 @@
                 "inlineHook": {
                     "type": "boolean"
                 },
+                "externRes": {
+                    "type": "boolean"
+                },
                 "modRes": {
                     "type": "object",
                     "additionalProperties": true,

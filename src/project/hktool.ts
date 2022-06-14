@@ -13,6 +13,7 @@ export class HKToolConfig {
     public compressResources: boolean = true;
     public modifyIL: boolean = true;
     public inlineHook: boolean = true;
+    public externRes: boolean = true;
     public modRes: {} = {};
 }
 
@@ -175,7 +176,7 @@ export class HKToolManager {
             console.error(result.stderr);
         }
     }
-    public static generateResInfo(project: Project): string {
+    public static generateResInfo(project: Project, isBuild: Boolean): string {
         if (!project.hktool?.modRes) return "";
         let res = project.hktool?.modRes;
         let sb = `[System.Runtime.CompilerServices.CompilerGeneratedAttribute]\ninternal static class ModRes\n{\n    static ModRes()\n{        HKTool.InitManager.CheckInit();\n    }\n`;
