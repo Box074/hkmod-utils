@@ -67,7 +67,7 @@ public static partial class Program
                     SymbolReaderProvider = new DefaultSymbolReaderProvider(true)
                 }))
                 {
-
+                    AssemblyResolver.assemblyMap.Add(ad.Name.Name, ad);
                     ILModifyAssembly(ad);
                     ad.Write(new WriterParameters()
                     {

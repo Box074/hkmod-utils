@@ -68,10 +68,11 @@ public static partial class Program
     public static TypeDefinition GenerateDelegate(MethodDefinition invokeMethod, ModuleDefinition md)
     {
         TypeDefinition del = new TypeDefinition(
-            null, "MD_" + (id++),
+            null, "MD_" + invokeMethod.DeclaringType.Name + "|" + (id++),
             TypeAttributes.NotPublic | TypeAttributes.Sealed | TypeAttributes.Class,
             md.ImportReference(FindType("System.MulticastDelegate", md))
         );
+        md.Types.Add(del);
         MethodDefinition ctor = new MethodDefinition(
             ".ctor",
             MethodAttributes.Public | MethodAttributes.HideBySig | MethodAttributes.SpecialName | MethodAttributes.RTSpecialName | MethodAttributes.ReuseSlot,
@@ -133,7 +134,6 @@ public static partial class Program
         invokeEnd.Body = new MethodBody(invokeEnd);
         del.Methods.Add(invokeEnd);
 
-        md.Types.Add(del);
         return del;
     }
 }

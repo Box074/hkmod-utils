@@ -5,6 +5,8 @@ VisualStudioVersion = 16.0.30114.105
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ILModify", "ILModify.csproj", "{EE57DEBC-2FE5-465C-AF0E-D8EC5A159630}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RefHelperGen", "RefHelperGen.csproj", "{EC105EAA-1DF8-4EAB-B95E-E0B44591F2A7}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -18,5 +20,9 @@ Global
 		{EE57DEBC-2FE5-465C-AF0E-D8EC5A159630}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{EE57DEBC-2FE5-465C-AF0E-D8EC5A159630}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{EE57DEBC-2FE5-465C-AF0E-D8EC5A159630}.Release|Any CPU.Build.0 = Release|Any CPU
+		{EC105EAA-1DF8-4EAB-B95E-E0B44591F2A7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{EC105EAA-1DF8-4EAB-B95E-E0B44591F2A7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{EC105EAA-1DF8-4EAB-B95E-E0B44591F2A7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{EC105EAA-1DF8-4EAB-B95E-E0B44591F2A7}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

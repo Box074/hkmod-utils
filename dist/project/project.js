@@ -66,6 +66,7 @@ export class ProjectDependencyCache {
 }
 export class ProjectCache {
     cacheRoot = "";
+    refHelper = "";
     dependencies = [];
 }
 export class ProjectDependenciesManager {
@@ -175,6 +176,9 @@ export class ProjectDependenciesManager {
                 count--;
                 console.error("complete(" + (allCount - count) + "/" + allCount + "): " + element.name);
                 if (count == 0) {
+                    console.error("RefHelperGen: Start");
+                    await HKToolManager.onGenRefHelper(cache.cacheRoot, project, cache);
+                    console.error("RefHelperGen: End");
                     resolve();
                 }
             }
@@ -271,6 +275,15 @@ export class ProjectManager {
         var refs = [];
         //Dependencies
         await ProjectDependenciesManager.checkProject(cache, project);
+        if (cache.refHelper) {
+            if (existsSync(cache.refHelper)) {
+                refs.push({
+                    name: "HKToolRefHelper",
+                    path: cache.refHelper,
+                    copy: false
+                });
+            }
+        }
         for (let index = 0; index < project.dependencies.length; index++) {
             const element = project.dependencies[index];
             let c = cache.dependencies.find((val) => val.name == element.name);

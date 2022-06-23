@@ -54,31 +54,31 @@ var resTypes = {
                         "    [System.Runtime.CompilerServices.CompilerGeneratedAttribute] public static UnityEngine.Sprite {spn}\n    {\n" +
                         "        get {\n" +
                         "            if(_SR_{spn} == null) {\n" +
-                        "                 var tex = {sn};\n"+
-                        "                _SR_{spn} = UnityEngine.Sprite.Create(tex, new UnityEngine.Rect("+ (sprite.uv ? (sprite.uv[0] == 0 ? "0f" : "tex.width * " + sprite.uv[0] + "f") : (sprite.pixel ? sprite.pixel[0] + "f" : "0f")) +
-                        ", "+ (sprite.uv ? (sprite.uv[1] == 0 ? "0f" : "tex.height * " + sprite.uv[1] + "f") : (sprite.pixel ? sprite.pixel[1] + "f" : "0f")) +
-                        ", "+ (sprite.uv ? (sprite.uv[2] == 0 ? "0f" : "tex.width * " + sprite.uv[2] + "f") : (sprite.pixel ? sprite.pixel[2] + "f" : "0f")) +
-                        ", "+ (sprite.uv ? (sprite.uv[3] == 0 ? "0f" : "tex.height * " + sprite.uv[3] + "f") : (sprite.pixel ? sprite.pixel[3] + "f" : "0f")) +
-                        "), new UnityEngine.Vector2("+ (sprite.pivot ? sprite.pivot[0] : "0.5") +"f, "+ (sprite.pivot ? sprite.pivot[1] : "0.5") +"f), " + 
-                            (sprite.pixelsPerUnit ? sprite.pixelsPerUnit : "64") +"f);\n" +
+                        "                 var tex = {sn};\n" +
+                        "                _SR_{spn} = UnityEngine.Sprite.Create(tex, new UnityEngine.Rect(" + (sprite.uv ? (sprite.uv[0] == 0 ? "0f" : "tex.width * " + sprite.uv[0] + "f") : (sprite.pixel ? sprite.pixel[0] + "f" : "0f")) +
+                        ", " + (sprite.uv ? (sprite.uv[1] == 0 ? "0f" : "tex.height * " + sprite.uv[1] + "f") : (sprite.pixel ? sprite.pixel[1] + "f" : "0f")) +
+                        ", " + (sprite.uv ? (sprite.uv[2] == 0 ? "0f" : "tex.width * " + sprite.uv[2] + "f") : (sprite.pixel ? sprite.pixel[2] + "f" : "0f")) +
+                        ", " + (sprite.uv ? (sprite.uv[3] == 0 ? "0f" : "tex.height * " + sprite.uv[3] + "f") : (sprite.pixel ? sprite.pixel[3] + "f" : "0f")) +
+                        "), new UnityEngine.Vector2(" + (sprite.pivot ? sprite.pivot[0] : "0.5") + "f, " + (sprite.pivot ? sprite.pivot[1] : "0.5") + "f), " +
+                        (sprite.pixelsPerUnit ? sprite.pixelsPerUnit : "64") + "f);\n" +
                         "            }\n" +
                         "            return _SR_{spn};\n" +
                         "        }\n    }\n")
-                            .replaceAll("{spn}", sprite.name);
-                    if(!isFirst) sprites += ", ";
+                        .replaceAll("{spn}", sprite.name);
+                    if (!isFirst) sprites += ", ";
                     isFirst = true;
                     sprites += sprite.name;
                 }
             }
-            if(cfg.spriteCollectionName) {
+            if (cfg.spriteCollectionName) {
                 s += ("    [System.Runtime.CompilerServices.CompilerGeneratedAttribute] private static UnityEngine.Sprite[] __{sn} = null!;\n" +
-                "    [System.Runtime.CompilerServices.CompilerGeneratedAttribute] public static UnityEngine.Sprite[] {sn}\n    {\n" +
-                "        get {\n" +
-                "            if(__{sn} == null) {\n" +
-                "                __{sn} = new UnityEngine.Sprite[]{ " + sprites +" };\n" +
-                "            }\n" +
-                "            return __{sn};\n" +
-                "        }\n    }\n").replaceAll("{sn}", cfg.spriteCollectionName)
+                    "    [System.Runtime.CompilerServices.CompilerGeneratedAttribute] public static UnityEngine.Sprite[] {sn}\n    {\n" +
+                    "        get {\n" +
+                    "            if(__{sn} == null) {\n" +
+                    "                __{sn} = new UnityEngine.Sprite[]{ " + sprites + " };\n" +
+                    "            }\n" +
+                    "            return __{sn};\n" +
+                    "        }\n    }\n").replaceAll("{sn}", cfg.spriteCollectionName)
             }
         }
 
@@ -144,7 +144,7 @@ export class HKToolManager {
         if (config.compressResources) {
             s += "[assembly: HKTool.Attributes.EmbeddedResourceCompressionAttribute()]\n";
         }
-        if(config.needVersion == undefined) s += "[assembly: HKTool.Attributes.NeedHKToolVersionAttribute(HKTool.ModBase.compileVersion)]\n";
+        if (config.needVersion == undefined) s += "[assembly: HKTool.Attributes.NeedHKToolVersionAttribute(HKTool.ModBase.compileVersion)]\n";
         else s += "[assembly: HKTool.Attributes.NeedHKToolVersionAttribute(\"" + config.needVersion + "\")]\n";
         return s;
     }
@@ -164,17 +164,33 @@ export class HKToolManager {
     public static async onModifyIL(outpath: string, project: Project, cache: ProjectCache) {
         if (!project.hktool?.modifyIL) return;
         let libraries = await ProjectManager.getLibraries(project, cache);
-        let args = [ join(dirname(new URL(import.meta.url).pathname.substring(1)), "..", "..", "bin", "net5.0", "ILModify.dll"), project.hktool.inlineHook ? "1" : "0", outpath];
+        let args = [join(dirname(new URL(import.meta.url).pathname.substring(1)), "..", "..", "bin", "net5.0", "ILModify.dll"), project.hktool.inlineHook ? "1" : "0", outpath];
         for (let i = 0; i < libraries.length; i++) {
             args.push(libraries[i].path);
         }
         let result = spawnSync("dotnet", args, {
             encoding: "ascii"
         });
-        if(result.status != 0)
-        {
+        if (result.status != 0) {
             console.error(result.stderr);
         }
+    }
+    public static async onGenRefHelper(outpath: string, project: Project, cache: ProjectCache) {
+        if (!project.hktool?.modifyIL) return;
+
+        let libraries = await ProjectManager.getLibraries(project, cache);
+        let args = [join(dirname(new URL(import.meta.url).pathname.substring(1)), "..", "..", "bin", "net5.0", "RefHelperGen.dll"), join(outpath, "RefHelper.dll")];
+        for (let i = 0; i < libraries.length; i++) {
+            if(libraries[i].name.startsWith("MMHOOK_") || libraries[i].name.startsWith("RefHelper")) continue;
+            args.push(libraries[i].path);
+        }
+        let result = spawnSync("dotnet", args, {
+            encoding: "ascii"
+        });
+        if (result.status != 0) {
+            console.error(result.stderr);
+        }
+        cache.refHelper = join(outpath, "RefHelper.dll");
     }
     public static generateResInfo(project: Project, isBuild: Boolean): string {
         if (!project.hktool?.modRes) return "";

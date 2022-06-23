@@ -166,6 +166,24 @@ export class HKToolManager {
             console.error(result.stderr);
         }
     }
+    static async onGenRefHelper(outpath, project, cache) {
+        if (!project.hktool?.modifyIL)
+            return;
+        let libraries = await ProjectManager.getLibraries(project, cache);
+        let args = [join(dirname(new URL(import.meta.url).pathname.substring(1)), "..", "..", "bin", "net5.0", "RefHelperGen.dll"), join(outpath, "RefHelper.dll")];
+        for (let i = 0; i < libraries.length; i++) {
+            if (libraries[i].name.startsWith("MMHOOK_") || libraries[i].name.startsWith("RefHelper"))
+                continue;
+            args.push(libraries[i].path);
+        }
+        let result = spawnSync("dotnet", args, {
+            encoding: "ascii"
+        });
+        if (result.status != 0) {
+            console.error(result.stderr);
+        }
+        cache.refHelper = join(outpath, "RefHelper.dll");
+    }
     static generateResInfo(project, isBuild) {
         if (!project.hktool?.modRes)
             return "";

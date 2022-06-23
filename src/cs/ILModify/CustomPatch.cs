@@ -28,6 +28,7 @@ public static partial class Program
 
         var type = (TypeReference)attr.ConstructorArguments[0].Value;
         var ass = type.Resolve().Module.Assembly;
+        if(ass == null) return;
         if(!assemblys.TryGetValue(ass.Name.Name, out var mass))
         {
             return;
