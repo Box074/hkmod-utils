@@ -63,6 +63,7 @@ export class BuildManager {
             let names: string[] = [];
             let offsets: number[] = [];
             let size: number[] = [];
+            let compress: boolean[] = [];
 
             let cache: Buffer[] = [];
             let offset = 0;
@@ -70,6 +71,15 @@ export class BuildManager {
                 let p = join(root, key);
                 if (!existsSync(p)) continue;
                 let data = readFileSync(p);
+                if(data.length >= 1024 * 1024 * 16)
+                {
+                    data = HKToolManager.onProcessingResourcesEx(project.hktool, data);
+                    compress.push(true);
+                }
+                else
+                {
+                    compress.push(false);
+                }
 
                 names.push("\"" + project.resources[key] + "\"");
                 offsets.push(offset);
@@ -78,14 +88,14 @@ export class BuildManager {
                 cache.push(data);
                 offset += data.length;
             }
-            writeFileSync(resPath, Buffer.concat(cache));
-            HKToolManager.onProcessingResources(project.hktool, resPath);
+            writeFileSync(resPath, HKToolManager.onProcessingResourcesEx(project.hktool, Buffer.concat(cache)));
 
             let modResList = join(dir, "modResList.cs");
             writeFileSync(modResList, (
                 "[assembly: HKTool.Attributes.ModResourcesListAttribute(new string[]{ " + names.join(",") + 
                 "}, new int[]{ " + offsets.join(",") + 
-                "}, new int[]{ " + size.join(",") + "})]\n"
+                "}, new int[]{ " + size.join(",") + 
+                "}, new bool[]{ " + compress.join(",") + "})]\n"
             ), "utf-8");
             extCS.push(modResList);
             

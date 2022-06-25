@@ -80,7 +80,7 @@ var resTypes = {
         "    [System.Runtime.CompilerServices.CompilerGeneratedAttribute] public static UnityEngine.AssetBundle {sn}\n    {\n" +
         "        get {\n" +
         "            if(__{sn} == null) {\n" +
-        "                __{sn} = UnityEngine.AssetBundle.LoadFromStream(typeof(ModRes).Assembly.GetManifestResourceStream(\"{n}\"));\n" +
+        "                __{sn} = UnityEngine.AssetBundle.LoadFromMemory(typeof(ModRes).Assembly.GetManifestResourceBytes(\"{n}\"));\n" +
         "            }\n" +
         "            return __{sn};\n" +
         "        }\n    }\n").replaceAll("{sn}", sn).replaceAll("{n}", n),
@@ -119,6 +119,14 @@ export class HKToolManager {
         if (config.compressResources) {
             writeFileSync(res, gzipSync(readFileSync(res)));
         }
+    }
+    static onProcessingResourcesEx(config, res) {
+        if (config == null)
+            return res;
+        if (config.compressResources) {
+            return gzipSync(res);
+        }
+        return res;
     }
     static onGenerateCS(project) {
         let config = project.hktool;

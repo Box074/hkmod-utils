@@ -62,6 +62,7 @@ export class Project {
     public hktool: HKToolConfig | undefined = undefined;
     public enableNullableCheck: boolean = true;
     public resources: {} = {};
+    public reference: string[] | undefined = [];
     public dependencies: ProjectDependency[] = [];
     public csproj: CSProjectTemplate = new CSProjectTemplate();
     public bindingLogger: string[] = []
@@ -335,6 +336,17 @@ export class ProjectManager {
             let files = readdirSync(project.libraryDir, "utf8");
             for (let i = 0; i < files.length; i++) {
                 const file = resolve(project.libraryDir, files[i]);
+                if(parse(file).ext != ".dll") continue;
+                refs.push({
+                    name: parse(file).name,
+                    path: file,
+                    copy: true
+                });
+            }
+        }
+        if(project.reference) {
+            for (let i = 0; i < project.reference.length; i++) {
+                const file = resolve(dirname(cache.cacheRoot), project.reference[i]);
                 refs.push({
                     name: parse(file).name,
                     path: file,

@@ -55,7 +55,8 @@
                                                 "bin",
                                                 "bytes",
                                                 "ab",
-                                                "assetbundle"
+                                                "assetbundle",
+                                                "stream"
                                             ]
                                         }
                                     },
