@@ -1,8 +1,9 @@
-import { spawnSync } from "child_process";
+import { spawn, spawnSync } from "child_process";
 import { existsSync, readFileSync, writeFileSync } from "fs";
-import { dirname, join } from "path";
+import { dirname, join, parse } from "path";
 import { gzipSync } from "zlib";
 import { ProjectDependency, ProjectManager } from "./project.js";
+const bindir = join(dirname(new URL(import.meta.url).pathname.substring(1)), "..", "..", "bin", "net5.0");
 export class HKToolConfig {
     needVersion;
     referenceLib = true;
@@ -10,6 +11,7 @@ export class HKToolConfig {
     modifyIL = true;
     inlineHook = true;
     externRes = true;
+    allPublic = false;
     modRes = {};
 }
 export class SpriteConfig {
@@ -163,7 +165,7 @@ export class HKToolManager {
         if (!project.hktool?.modifyIL)
             return;
         let libraries = await ProjectManager.getLibraries(project, cache);
-        let args = [join(dirname(new URL(import.meta.url).pathname.substring(1)), "..", "..", "bin", "net5.0", "ILModify.dll"), project.hktool.inlineHook ? "1" : "0", outpath];
+        let args = [join(bindir, "ILModify.dll"), project.hktool.inlineHook ? "1" : "0", outpath];
         for (let i = 0; i < libraries.length; i++) {
             args.push(libraries[i].path);
         }
@@ -174,11 +176,29 @@ export class HKToolManager {
             console.error(result.stderr);
         }
     }
+    static async setAllPublic(path, project) {
+        return new Promise((resolve, reject) => {
+            if ((!project.hktool?.allPublic) || (parse(path).ext != ".dll")) {
+                resolve(false);
+                return;
+            }
+            let args = [join(bindir, "ILModify.dll"), "3", path];
+            let result = spawn("dotnet", args);
+            result.stderr.setEncoding("ascii");
+            result.on("exit", (code) => {
+                if (code != 0) {
+                    reject(result.stderr.read());
+                }
+                console.error(result.stderr.read());
+                resolve(true);
+            });
+        });
+    }
     static async onGenRefHelper(outpath, project, cache) {
         if (!project.hktool?.modifyIL)
             return;
         let libraries = await ProjectManager.getLibraries(project, cache);
-        let args = [join(dirname(new URL(import.meta.url).pathname.substring(1)), "..", "..", "bin", "net5.0", "RefHelperGen.dll"), join(outpath, "RefHelper.dll")];
+        let args = [join(bindir, "RefHelperGen.dll"), join(outpath, "RefHelper.dll")];
         for (let i = 0; i < libraries.length; i++) {
             if (libraries[i].name.startsWith("MMHOOK_") || libraries[i].name.startsWith("RefHelper"))
                 continue;

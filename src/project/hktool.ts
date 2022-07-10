@@ -1,11 +1,13 @@
-import { execSync, spawnSync } from "child_process";
+import { execSync, spawn, spawnSync } from "child_process";
 import { gzip } from "compressing";
 import { existsSync, readFileSync, write, writeFileSync } from "fs";
-import { dirname, join } from "path";
+import { dirname, join, parse } from "path";
 import { execArgv } from "process";
 import { text } from "stream/consumers";
 import { gzipSync } from "zlib";
 import { Project, ProjectCache, ProjectDependency, ProjectManager } from "./project.js";
+
+const bindir: string = join(dirname(new URL(import.meta.url).pathname.substring(1)), "..", "..", "bin", "net5.0");
 
 export class HKToolConfig {
     public needVersion: string | undefined;
@@ -14,6 +16,7 @@ export class HKToolConfig {
     public modifyIL: boolean = true;
     public inlineHook: boolean = true;
     public externRes: boolean = true;
+    public allPublic: boolean = false;
     public modRes: {} = {};
 }
 
@@ -171,7 +174,7 @@ export class HKToolManager {
     public static async onModifyIL(outpath: string, project: Project, cache: ProjectCache) {
         if (!project.hktool?.modifyIL) return;
         let libraries = await ProjectManager.getLibraries(project, cache);
-        let args = [join(dirname(new URL(import.meta.url).pathname.substring(1)), "..", "..", "bin", "net5.0", "ILModify.dll"), project.hktool.inlineHook ? "1" : "0", outpath];
+        let args = [join(bindir, "ILModify.dll"), project.hktool.inlineHook ? "1" : "0", outpath];
         for (let i = 0; i < libraries.length; i++) {
             args.push(libraries[i].path);
         }
@@ -182,13 +185,33 @@ export class HKToolManager {
             console.error(result.stderr);
         }
     }
+    public static async setAllPublic(path: string, project: Project): Promise<boolean> {
+        return new Promise<boolean>((resolve, reject) => {
+            if ((!project.hktool?.allPublic) || (parse(path).ext != ".dll"))
+            {
+                resolve(false);
+                return;
+            }
+            let args = [join(bindir, "ILModify.dll"), "3", path];
+            let result = spawn("dotnet", args);
+            result.stderr.setEncoding("ascii");
+            result.on("exit", (code: number) => {
+                if(code != 0) 
+                {
+                    reject(result.stderr.read());
+                }
+                console.error(result.stderr.read());
+                resolve(true);
+            });
+        });
+    }
     public static async onGenRefHelper(outpath: string, project: Project, cache: ProjectCache) {
         if (!project.hktool?.modifyIL) return;
 
         let libraries = await ProjectManager.getLibraries(project, cache);
-        let args = [join(dirname(new URL(import.meta.url).pathname.substring(1)), "..", "..", "bin", "net5.0", "RefHelperGen.dll"), join(outpath, "RefHelper.dll")];
+        let args = [join(bindir, "RefHelperGen.dll"), join(outpath, "RefHelper.dll")];
         for (let i = 0; i < libraries.length; i++) {
-            if(libraries[i].name.startsWith("MMHOOK_") || libraries[i].name.startsWith("RefHelper")) continue;
+            if (libraries[i].name.startsWith("MMHOOK_") || libraries[i].name.startsWith("RefHelper")) continue;
             args.push(libraries[i].path);
         }
         let result = spawnSync("dotnet", args, {

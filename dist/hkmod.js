@@ -1,4 +1,4 @@
-import { spawnSync } from "child_process";
+import { exec, spawnSync } from "child_process";
 import { program } from "commander";
 import { zip } from "compressing";
 import { createHash } from "crypto";
@@ -13,8 +13,7 @@ import { copyTemplateTo } from "./project/projectTemplate.js";
 import { ModLogTrack } from "./utils/modlogTrack.js";
 program.version("0.0.1");
 program.command("modlog [modlogPath]")
-    .option("-P, --project <projectFile>", undefined, "./modProject.json")
-    .option("-WS, --webSocket")
+    .option("-e, --autoExit", "", false)
     .action((path, options) => {
     ModLogTrack.Init(path, options);
 });
@@ -44,6 +43,7 @@ c_redirect.command("host")
 program.command("build [projectFile]")
     .option("-CZ, --CreateZip", "", false)
     .option("-H256, --SHA256", "", false)
+    .option("-debug, --RunDebug", "", false)
     .action(async (projectFile, options) => {
     let project = ProjectManager.loadProject(projectFile);
     let cache = ProjectManager.loadProjectCache(projectFile);
@@ -68,6 +68,20 @@ program.command("build [projectFile]")
     if (result.status === 0) {
         let outDLL = join(outDir, project.modName + ".dll");
         HKToolManager.onModifyIL(outDLL, project, cache);
+        if (options["RunDebug"]) {
+            let args = ["-applaunch", "367520"];
+            args.push("--hktool-debug-mods");
+            args.push("\"" + outDLL + "\"");
+            let libraries = await ProjectManager.getLibraries(project, cache, true);
+            for (let i = 0; i < libraries.length; i++) {
+                const element = libraries[i];
+                if (element.name == "HKToolRefHelper")
+                    continue;
+                args.push("\"" + element.name + "=" + element.path + "\"");
+            }
+            console.log(args.join(" "));
+            exec(await GlobalConfigManager.getSteamPath() + " " + args.join(" "));
+        }
         if (options["CreateZip"]) {
             //zip.compressDir(outDir, resolve(projectFile || ".", "Output.zip"));
             let zipS = new zip.Stream();

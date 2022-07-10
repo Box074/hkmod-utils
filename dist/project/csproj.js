@@ -49,7 +49,7 @@ export class CSProjectManager {
         return proj;
     }
     static async addDevOption(itemGroup, propertyGroup, project, cache, isBuild) {
-        propertyGroup.push(new CSProjectItem("AssemblyName", project.modName), new CSProjectItem("TargetFramework", "net472"), new CSProjectItem("Version", project.modVersion), new CSProjectItem("EnableDefaultItems", "false"), new CSProjectItem("EnableDefaultCompileItems", "false"), new CSProjectItem("Nullable", project.enableNullableCheck ? "enable" : "disable"), new CSProjectItem("DebugType", "portable"), new CSProjectItem("OutputType", "Library"), new CSProjectItem("LangVersion", "preview"), new CSProjectItem("DebugSymbols", "true"), new CSProjectItem("Optimize", "true"));
+        propertyGroup.push(new CSProjectItem("AssemblyName", project.modName), new CSProjectItem("TargetFramework", "net472"), new CSProjectItem("Version", project.modVersion), new CSProjectItem("EnableDefaultItems", "false"), new CSProjectItem("EnableDefaultCompileItems", "false"), new CSProjectItem("Nullable", project.enableNullableCheck ? "enable" : "disable"), new CSProjectItem("DebugType", "portable"), new CSProjectItem("OutputType", "Library"), new CSProjectItem("LangVersion", "preview"), new CSProjectItem("DebugSymbols", "true"), new CSProjectItem("Optimize", "true"), new CSProjectItem("AllowUnsafeBlocks", "true"));
         let dep = await ProjectManager.getLibraries(project, cache);
         for (let i = 0; i < dep.length; i++) {
             const element = dep[i];

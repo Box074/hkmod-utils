@@ -1,13 +1,14 @@
 {
     "name": "hkmod-utils",
-    "version": "0.1.25",
+    "version": "0.1.27",
     "repository": "github:HKLab/hkmod-utils",
     "type": "module",
     "dependencies": {
         "colors": "^1.4.0",
         "commander": "^9.2.0",
         "compressing": "^1.5.1",
-        "got": "^12.0.4"
+        "got": "^12.0.4",
+        "nodejs-websocket": "^1.7.2"
     },
     "main": "./dist/hkmod.js",
     "bin": {

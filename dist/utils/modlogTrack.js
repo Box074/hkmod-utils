@@ -1,7 +1,6 @@
 import { readFileSync, watchFile } from "fs";
 import { platform } from "os";
 import { join } from "path";
-import { ProjectManager } from "../project/project.js";
 import colors from "colors";
 var modlogPath;
 switch (platform()) {
@@ -24,19 +23,19 @@ const levels = {
 export class ModLogTrack {
     static currentWord = 0;
     static Init(path = undefined, options) {
-        let project = ProjectManager.loadProject(options["project"]);
-        let wsa = options["webSocket"];
-        let ws;
-        if (wsa != undefined) {
-            ws = new WebSocket("ws://" + wsa);
-        }
-        watchFile(path || modlogPath, (curr, prev) => {
+        watchFile(path || modlogPath, {
+            "interval": 100
+        }, (curr, prev) => {
             if (curr.mtime.getTime() <= prev.mtime.getTime())
                 return;
             try {
-                project = ProjectManager.loadProject(options["project"]);
+                let willExit = false;
                 let data = readFileSync(modlogPath, "utf-8");
                 let nextP = data.length;
+                if (nextP < this.currentWord) {
+                    this.currentWord = 0;
+                    console.clear();
+                }
                 let lines = data.substring(this.currentWord).trim().split("\n");
                 this.currentWord = nextP;
                 for (let i = 0; i < lines.length; i++) {
@@ -52,17 +51,12 @@ export class ModLogTrack {
                         info = body.substring(5 + name.length);
                     }
                     info = info.trim();
-                    if (project.bindingLogger.includes(name)) {
-                        if (ws != undefined) {
-                            ws.send(JSON.stringify(({
-                                name: name,
-                                body: body,
-                                info: info,
-                                full: line
-                            })));
-                        }
-                        levels[l](line);
-                    }
+                    levels[l](line);
+                    if (options["autoExit"] && line.indexOf("[INFO]:[UNITY] - Shutting down Steam API.") != -1)
+                        willExit = true;
+                }
+                if (willExit) {
+                    process.exit(0);
                 }
             }
             catch (e) {

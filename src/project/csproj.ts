@@ -59,7 +59,8 @@ export class CSProjectManager {
             new CSProjectItem("OutputType", "Library"),
             new CSProjectItem("LangVersion", "preview"),
             new CSProjectItem("DebugSymbols", "true"),
-            new CSProjectItem("Optimize", "true")
+            new CSProjectItem("Optimize", "true"),
+            new CSProjectItem("AllowUnsafeBlocks", "true")
         );
         let dep = await ProjectManager.getLibraries(project, cache);
 

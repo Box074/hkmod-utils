@@ -153,6 +153,7 @@ export class ProjectDependenciesManager {
                 if (ignoreFiles.indexOf(parse(v).base) != -1 || (project.hktool?.inlineHook && parse(v).base.startsWith("MMHOOK_"))) {
                     continue;
                 }
+                await HKToolManager.setAllPublic(p, project);
                 var md5 = this.getMD5(p);
                 var destpath = join(cacheRoot, md5 + extname(v));
                 cache.md5[destpath] = md5;
@@ -168,6 +169,10 @@ export class ProjectDependenciesManager {
             cache.md5[p] = md5;
             cache.files[parse(path).base] = p;
             writeFileSync(p, data);
+            if(await HKToolManager.setAllPublic(p, project))
+            {
+                cache.md5[p] = this.getMD5FromBuffer(readFileSync(p));
+            }
         }
         await this.genHook(project, cache, cacheRoot);
     }
@@ -286,7 +291,7 @@ export class ProjectDependenciesManager {
 }
 
 export class ProjectManager {
-    public static async getLibraries(project: Project, cache: ProjectCache): Promise<{ name: string; path: string; copy: boolean; }[]> {
+    public static async getLibraries(project: Project, cache: ProjectCache, noApi: boolean = false): Promise<{ name: string; path: string; copy: boolean; }[]> {
         var refs: { name: string; path: string; copy: boolean; }[] = [];
         //Dependencies
 
@@ -305,6 +310,10 @@ export class ProjectManager {
         }
         for (let index = 0; index < project.dependencies.length; index++) {
             const element = project.dependencies[index];
+            if(noApi)
+            {
+                if(element.name == "Modding API" || element.name == "Vanilla" || element.name == "HKTool") continue;
+            }
 
             let c = cache.dependencies.find((val) => val.name == element.name);
             if (c != null) {

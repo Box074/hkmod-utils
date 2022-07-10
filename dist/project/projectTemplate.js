@@ -11,6 +11,7 @@ export function copyTemplateTo(dest, project) {
     pj.scripts = pj.scripts || {};
     pj.scripts.build = "hkmod build -CZ -H256 > Info.txt";
     pj.scripts.csproj = "hkmod generateCsproj";
+    pj.scripts.debug = "hkmod build -debug & hkmod modlog --autoExit";
     writeFileSync(packageJson, JSON.stringify(pj, undefined, 4), "utf-8");
     let gha = join(dest, ".github", "workflows");
     mkdirSync(gha, { recursive: true });

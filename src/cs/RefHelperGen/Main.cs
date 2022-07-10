@@ -124,7 +124,7 @@ public static partial class Program
                 if (!method.IsStatic)
                 {
                     useInstance = true;
-                    method0.Parameters.Add(new(module.ImportReference(method.DeclaringType)));
+                    method0.Parameters.Add(new(module.ImportReference(method.DeclaringType.IsValueType ? new ByReferenceType(method.DeclaringType) : method.DeclaringType)));
                     method0.CustomAttributes.Add(new(module.ImportReference(ExtensionAttributeCtor)));
                     instanceType.Methods.Add(method0);
                 }
@@ -161,7 +161,7 @@ public static partial class Program
                 if (!field.IsStatic)
                 {
                     useInstance = true;
-                    method.Parameters.Add(new("self", ParameterAttributes.None, module.ImportReference(type)));
+                    method.Parameters.Add(new("self", ParameterAttributes.None, module.ImportReference(type.IsValueType ? new ByReferenceType(type) : type)));
                     method.CustomAttributes.Add(new(module.ImportReference(ExtensionAttributeCtor)));
                 }
                 else

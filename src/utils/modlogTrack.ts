@@ -28,47 +28,44 @@ const levels = {
 export class ModLogTrack {
     public static currentWord: number = 0;
     public static Init(path: string | undefined = undefined, options: {}) {
-        let project = ProjectManager.loadProject(options["project"]);
-        let wsa: string | undefined = options["webSocket"];
-        let ws: WebSocket | undefined;
-        if(wsa != undefined) {
-            ws = new WebSocket("ws://" + wsa);
-        }
-        watchFile(path || modlogPath, (curr, prev) => {
-            
+        watchFile(path || modlogPath,
+            {
+                "interval": 100
+            }, (curr, prev) => {
+
             if (curr.mtime.getTime() <= prev.mtime.getTime()) return;
-            
+
             try {
-                project = ProjectManager.loadProject(options["project"]);
+                let willExit = false;
                 let data = readFileSync(modlogPath, "utf-8");
                 let nextP = data.length;
+                if(nextP < this.currentWord)
+                {
+                    this.currentWord = 0;
+                    console.clear();
+                }
                 let lines = data.substring(this.currentWord).trim().split("\n");
                 this.currentWord = nextP;
                 for (let i = 0; i < lines.length; i++) {
                     const line = lines[i].trim();
                     let l = Object.keys(levels).find(val => line.startsWith(val));
-                    if(l == undefined) continue;
+                    if (l == undefined) continue;
                     let body = line.substring(l.length).trim();
                     let name = "";
                     let info = body;
-                    if(body[0] == "[") {
+                    if (body[0] == "[") {
                         name = body.substring(1, body.indexOf("]"));
                         info = body.substring(5 + name.length);
                     }
                     info = info.trim();
-                    if(project.bindingLogger.includes(name)) {
-                        if(ws != undefined) {
-                            ws.send(JSON.stringify(({
-                                name: name,
-                                body: body,
-                                info: info,
-                                full: line
-                            })));
-                        }
-                        levels[l](line);
-                    }
+                    levels[l](line);
+                    if(options["autoExit"] && line.indexOf("[INFO]:[UNITY] - Shutting down Steam API.") != -1) willExit = true;
                 }
-                
+                if(willExit)
+                {
+                    process.exit(0);
+                }
+
             } catch (e) {
 
             }

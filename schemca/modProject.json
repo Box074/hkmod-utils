@@ -35,6 +35,9 @@
                 "externRes": {
                     "type": "boolean"
                 },
+                "allPublic": {
+                    "type": "boolean"
+                },
                 "modRes": {
                     "type": "object",
                     "additionalProperties": true,
