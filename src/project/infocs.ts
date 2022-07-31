@@ -28,7 +28,7 @@ export function generateCSInfo(project: Project): string {
                 s += memberSpace + "internal const string " + n + " = @\"" + v + "\";\n";
             } else if(typeof(v) == "number") {
                 hasElement = true;
-                s += memberSpace + "internal const int " + n + " = " + v + ";\n";
+                s += memberSpace + "internal const float " + n + " = " + v + "f;\n";
             } else if(typeof(v) == "boolean") {
                 hasElement = true;
                 s += memberSpace + "internal const bool " + n + " = " + v + ";\n";

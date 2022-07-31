@@ -57,10 +57,35 @@
                                                 "binary",
                                                 "bin",
                                                 "bytes",
-                                                "ab",
-                                                "assetbundle",
                                                 "stream"
                                             ]
+                                        }
+                                    },
+                                    "required": [
+                                        "name",
+                                        "type"
+                                    ]
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "name": {
+                                            "type": "string"
+                                        },
+                                        "type": {
+                                            "type": "string",
+                                            "enum": [
+                                                "ab",
+                                                "assetbundle"
+                                            ]
+                                        },
+                                        "assets": {
+                                            "type": "object",
+                                            "patternProperties": {
+                                                "": {
+                                                    "type": "string"
+                                                }
+                                            }
                                         }
                                     },
                                     "required": [

@@ -1,5 +1,5 @@
 
-import { exec, execFile, execSync, spawnSync } from "child_process";
+import { exec, execFile, execSync, spawn, spawnSync } from "child_process";
 import { program } from "commander";
 import { gzip, tar, zip } from "compressing";
 import { createHash } from "crypto";
@@ -9,7 +9,7 @@ import { dirname, join, parse, resolve } from "path";
 import { BuildManager } from "./project/build.js";
 import { CSProjectManager } from "./project/csproj.js";
 import { GlobalConfig, GlobalConfigManager } from "./globalConfig.js";
-import { HKToolManager } from "./project/hktool.js";
+import { bindir, HKToolManager } from "./project/hktool.js";
 import { CSProjectItem, CSProjectTemplate, Project, ProjectCache, ProjectDependenciesManager, ProjectDependency, ProjectDependencyCache, ProjectManager } from "./project/project.js";
 import { copyTemplateTo } from "./project/projectTemplate.js";
 import { ModLogTrack } from "./utils/modlogTrack.js";
@@ -82,12 +82,13 @@ program.command("build [projectFile]")
                 let libraries = await ProjectManager.getLibraries(project, cache, true);
                 for (let i = 0; i < libraries.length; i++) {
                     const element = libraries[i];
-                    if(element.name == "HKToolRefHelper") continue;
+                    if (element.name == "HKToolRefHelper") continue;
                     args.push("\"" + element.name + "=" + element.path + "\"")
                 }
-                console.log(args.join(" "));
+                let cmd = await GlobalConfigManager.getSteamPath() + " " + args.join(" ");
+                console.log(cmd);
 
-                exec(await GlobalConfigManager.getSteamPath() + " " + args.join(" "));
+                exec(cmd);
             }
             if (options["CreateZip"]) {
                 //zip.compressDir(outDir, resolve(projectFile || ".", "Output.zip"));

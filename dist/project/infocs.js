@@ -26,7 +26,7 @@ export function generateCSInfo(project) {
             }
             else if (typeof (v) == "number") {
                 hasElement = true;
-                s += memberSpace + "internal const int " + n + " = " + v + ";\n";
+                s += memberSpace + "internal const float " + n + " = " + v + "f;\n";
             }
             else if (typeof (v) == "boolean") {
                 hasElement = true;

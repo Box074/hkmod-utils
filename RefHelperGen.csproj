@@ -14,7 +14,9 @@
     <Compile Include="./src/cs/RefHelperGen/**/*.cs" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="Mono.Cecil" Version="0.11.4" />
+    <Reference Include="Mono.Cecil">
+      <HintPath>./bin/monomod/Mono.Cecil.dll</HintPath>
+    </Reference>
   </ItemGroup>
 
 </Project>

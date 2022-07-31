@@ -79,8 +79,9 @@ program.command("build [projectFile]")
                     continue;
                 args.push("\"" + element.name + "=" + element.path + "\"");
             }
-            console.log(args.join(" "));
-            exec(await GlobalConfigManager.getSteamPath() + " " + args.join(" "));
+            let cmd = await GlobalConfigManager.getSteamPath() + " " + args.join(" ");
+            console.log(cmd);
+            exec(cmd);
         }
         if (options["CreateZip"]) {
             //zip.compressDir(outDir, resolve(projectFile || ".", "Output.zip"));

@@ -7,7 +7,7 @@ import { text } from "stream/consumers";
 import { gzipSync } from "zlib";
 import { Project, ProjectCache, ProjectDependency, ProjectManager } from "./project.js";
 
-const bindir: string = join(dirname(new URL(import.meta.url).pathname.substring(1)), "..", "..", "bin", "net5.0");
+export const bindir: string = join(dirname(new URL(import.meta.url).pathname.substring(1)), "..", "..", "bin", "net5.0");
 
 export class HKToolConfig {
     public needVersion: string | undefined;
@@ -31,6 +31,7 @@ export class SpriteConfig {
 export class ResConfig {
     public name: string = "";
     public type: string = "byte";
+    public assets: {} | undefined;
     public spriteCollectionName: string | undefined;
     public sprites: SpriteConfig[] | undefined;
 }
@@ -87,15 +88,33 @@ var resTypes = {
 
         return s.replaceAll("{sn}", sn).replaceAll("{n}", n)
     },
-    assetbundle: (n: string, sn: string) => (
-        "    [System.Runtime.CompilerServices.CompilerGeneratedAttribute] private static UnityEngine.AssetBundle __{sn} = null!;\n" +
-        "    [System.Runtime.CompilerServices.CompilerGeneratedAttribute] public static UnityEngine.AssetBundle {sn}\n    {\n" +
-        "        get {\n" +
-        "            if(__{sn} == null) {\n" +
-        "                __{sn} = UnityEngine.AssetBundle.LoadFromMemory(typeof(ModRes).Assembly.GetManifestResourceBytes(\"{n}\"));\n" +
-        "            }\n" +
-        "            return __{sn};\n" +
-        "        }\n    }\n").replaceAll("{sn}", sn).replaceAll("{n}", n),
+    assetbundle: function (n: string, sn: string, cfg: ResConfig) {
+        let s = ("    [System.Runtime.CompilerServices.CompilerGeneratedAttribute] private static UnityEngine.AssetBundle __{sn} = null!;\n" +
+            "    [System.Runtime.CompilerServices.CompilerGeneratedAttribute] public static UnityEngine.AssetBundle {sn}\n    {\n" +
+            "        get {\n" +
+            "            if(__{sn} == null) {\n" +
+            "                __{sn} = UnityEngine.AssetBundle.LoadFromMemory(typeof(ModRes).Assembly.GetManifestResourceBytes(\"{n}\"));\n" +
+            "            }\n" +
+            "            return __{sn};\n" +
+            "        }\n    }\n").replaceAll("{sn}", sn).replaceAll("{n}", n);
+        if (cfg.assets) {
+            for (const key in cfg.assets) {
+                if (Object.prototype.hasOwnProperty.call(cfg.assets, key)) {
+                    const el = cfg.assets[key];
+                    s += (
+                        "    [System.Runtime.CompilerServices.CompilerGeneratedAttribute] private static {type} __{sn}__{assetName} = null!;\n" +
+                        "    [System.Runtime.CompilerServices.CompilerGeneratedAttribute] public static {type} {sn}_{assetName}\n    {\n" +
+                        "        get {\n" +
+                        "            if(__{sn}__{assetName} == null) {\n" +
+                        "                __{sn}__{assetName} = {sn}.LoadAsset<{type}>(\"{n}\");\n" +
+                        "            }\n" +
+                        "            return  __{sn}__{assetName};\n" +
+                        "        }\n    }\n"
+                    ).replaceAll("{sn}", sn).replaceAll("{assetName}", parse(key).name).replaceAll("{type}", el).replaceAll("{n}", key);
+                }
+            }
+        }
+    },
     bytes: (n: string, sn: string) => (
         "    [System.Runtime.CompilerServices.CompilerGeneratedAttribute] private static byte[] __{sn} = null!;\n" +
         "    [System.Runtime.CompilerServices.CompilerGeneratedAttribute] public static byte[] {sn}\n    {\n" +
@@ -187,8 +206,7 @@ export class HKToolManager {
     }
     public static async setAllPublic(path: string, project: Project): Promise<boolean> {
         return new Promise<boolean>((resolve, reject) => {
-            if ((!project.hktool?.allPublic) || (parse(path).ext != ".dll"))
-            {
+            if ((!project.hktool?.allPublic) || (parse(path).ext != ".dll")) {
                 resolve(false);
                 return;
             }
@@ -196,8 +214,7 @@ export class HKToolManager {
             let result = spawn("dotnet", args);
             result.stderr.setEncoding("ascii");
             result.on("exit", (code: number) => {
-                if(code != 0) 
-                {
+                if (code != 0) {
                     reject(result.stderr.read());
                 }
                 console.error(result.stderr.read());

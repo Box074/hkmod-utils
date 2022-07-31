@@ -3,7 +3,7 @@ import { existsSync, readFileSync, writeFileSync } from "fs";
 import { dirname, join, parse } from "path";
 import { gzipSync } from "zlib";
 import { ProjectDependency, ProjectManager } from "./project.js";
-const bindir = join(dirname(new URL(import.meta.url).pathname.substring(1)), "..", "..", "bin", "net5.0");
+export const bindir = join(dirname(new URL(import.meta.url).pathname.substring(1)), "..", "..", "bin", "net5.0");
 export class HKToolConfig {
     needVersion;
     referenceLib = true;
@@ -24,6 +24,7 @@ export class SpriteConfig {
 export class ResConfig {
     name = "";
     type = "byte";
+    assets;
     spriteCollectionName;
     sprites;
 }
@@ -78,14 +79,31 @@ var resTypes = {
         }
         return s.replaceAll("{sn}", sn).replaceAll("{n}", n);
     },
-    assetbundle: (n, sn) => ("    [System.Runtime.CompilerServices.CompilerGeneratedAttribute] private static UnityEngine.AssetBundle __{sn} = null!;\n" +
-        "    [System.Runtime.CompilerServices.CompilerGeneratedAttribute] public static UnityEngine.AssetBundle {sn}\n    {\n" +
-        "        get {\n" +
-        "            if(__{sn} == null) {\n" +
-        "                __{sn} = UnityEngine.AssetBundle.LoadFromMemory(typeof(ModRes).Assembly.GetManifestResourceBytes(\"{n}\"));\n" +
-        "            }\n" +
-        "            return __{sn};\n" +
-        "        }\n    }\n").replaceAll("{sn}", sn).replaceAll("{n}", n),
+    assetbundle: function (n, sn, cfg) {
+        let s = ("    [System.Runtime.CompilerServices.CompilerGeneratedAttribute] private static UnityEngine.AssetBundle __{sn} = null!;\n" +
+            "    [System.Runtime.CompilerServices.CompilerGeneratedAttribute] public static UnityEngine.AssetBundle {sn}\n    {\n" +
+            "        get {\n" +
+            "            if(__{sn} == null) {\n" +
+            "                __{sn} = UnityEngine.AssetBundle.LoadFromMemory(typeof(ModRes).Assembly.GetManifestResourceBytes(\"{n}\"));\n" +
+            "            }\n" +
+            "            return __{sn};\n" +
+            "        }\n    }\n").replaceAll("{sn}", sn).replaceAll("{n}", n);
+        if (cfg.assets) {
+            for (const key in cfg.assets) {
+                if (Object.prototype.hasOwnProperty.call(cfg.assets, key)) {
+                    const el = cfg.assets[key];
+                    s += ("    [System.Runtime.CompilerServices.CompilerGeneratedAttribute] private static {type} __{sn}__{assetName} = null!;\n" +
+                        "    [System.Runtime.CompilerServices.CompilerGeneratedAttribute] public static {type} {sn}_{assetName}\n    {\n" +
+                        "        get {\n" +
+                        "            if(__{sn}__{assetName} == null) {\n" +
+                        "                __{sn}__{assetName} = {sn}.LoadAsset<{type}>(\"{n}\");\n" +
+                        "            }\n" +
+                        "            return  __{sn}__{assetName};\n" +
+                        "        }\n    }\n").replaceAll("{sn}", sn).replaceAll("{assetName}", parse(key).name).replaceAll("{type}", el).replaceAll("{n}", key);
+                }
+            }
+        }
+    },
     bytes: (n, sn) => ("    [System.Runtime.CompilerServices.CompilerGeneratedAttribute] private static byte[] __{sn} = null!;\n" +
         "    [System.Runtime.CompilerServices.CompilerGeneratedAttribute] public static byte[] {sn}\n    {\n" +
         "        get {\n" +
