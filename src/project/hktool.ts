@@ -114,6 +114,7 @@ var resTypes = {
                 }
             }
         }
+        return s;
     },
     bytes: (n: string, sn: string) => (
         "    [System.Runtime.CompilerServices.CompilerGeneratedAttribute] private static byte[] __{sn} = null!;\n" +

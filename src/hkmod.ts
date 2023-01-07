@@ -3,7 +3,7 @@ import { exec, execFile, execSync, spawn, spawnSync } from "child_process";
 import { program } from "commander";
 import { gzip, tar, zip } from "compressing";
 import { createHash } from "crypto";
-import { createWriteStream, existsSync, mkdir, mkdirSync, readdirSync, readFileSync, rm, rmSync, writeFileSync } from "fs";
+import { copyFile, copyFileSync, createWriteStream, existsSync, mkdir, mkdirSync, readdirSync, readFileSync, rm, rmSync, writeFileSync } from "fs";
 import * as http from "http";
 import { dirname, join, parse, resolve } from "path";
 import { BuildManager } from "./project/build.js";
@@ -75,6 +75,16 @@ program.command("build [projectFile]")
         if (result.status === 0) {
             let outDLL = join(outDir, project.modName + ".dll");
             HKToolManager.onModifyIL(outDLL, project, cache);
+            let libraries = await ProjectManager.getLibraries(project, cache, true);
+            for (const key in libraries) {
+                if (Object.prototype.hasOwnProperty.call(libraries, key)) {
+                    const element = libraries[key];
+                    if(element.copy)
+                    {
+                        copyFileSync(element.path, join(outDir, element.name + ".dll"));
+                    }
+                }
+            }
             if (options["RunDebug"]) {
                 let args = ["-applaunch", "367520"];
                 args.push("--hktool-debug-mods");

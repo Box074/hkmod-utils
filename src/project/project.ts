@@ -98,22 +98,22 @@ export class ProjectDependenciesManager {
             for (const key in cache.files) {
                 if (Object.prototype.hasOwnProperty.call(cache.files, key)) {
                     const element = cache.files[key];
-                    if(parse(key).ext != ".dll") continue;
+                    if (parse(key).ext != ".dll") continue;
                     count++;
                     let ls = spawn("dotnet",
                         [join(dirname(new URL(import.meta.url).pathname.substring(1)), "..", "..", "bin", "monomod", "MonoMod.RuntimeDetour.HookGen.dll"), "--orig", "--private", element]);
                     ls.on("exit", (code) => {
                         let hookFile = join(parse(element).dir, "MMHOOK_" + parse(element).name + ".dll");
-                        
+
                         if (existsSync(hookFile)) {
                             cache.hooks["MMHOOK_" + key] = hookFile;
                             spawn("dotnet", [join(dirname(new URL(import.meta.url).pathname.substring(1)), "..", "..", "bin", "net5.0", "ILModify.dll"), "2", hookFile])
-                            .on("exit", (code2) => {
-                                count--;
-                                console.error(hookFile);
-                                console.error("HookGen(" + count + "):" + key);
-                                if (count <= 0) resolve(undefined);
-                            });
+                                .on("exit", (code2) => {
+                                    count--;
+                                    console.error(hookFile);
+                                    console.error("HookGen(" + count + "):" + key);
+                                    if (count <= 0) resolve(undefined);
+                                });
                             /*console.log(
                                 spawnSync("dotnet", [join(dirname(new URL(import.meta.url).pathname.substring(1)), "..", "..", "bin", "net6.0", "ILModify.dll"), "2", hookFile], 
                                 {
@@ -148,16 +148,21 @@ export class ProjectDependenciesManager {
                 let v = files[i];
 
                 let p = resolve(temp, v);
+                let p1 = parse(p);
                 let status = statSync(p);
                 if (status.isDirectory()) continue;
-                if (ignoreFiles.indexOf(parse(v).base) != -1 || (project.hktool?.inlineHook && parse(v).base.startsWith("MMHOOK_"))) {
+                if (ignoreFiles.indexOf(p1.base) != -1 || (project.hktool?.inlineHook && p1.base.startsWith("MMHOOK_"))) {
                     continue;
                 }
                 await HKToolManager.setAllPublic(p, project);
                 var md5 = this.getMD5(p);
                 var destpath = join(cacheRoot, md5 + extname(v));
+                if (p1.base.endsWith(".modres")) {
+                    destpath = join(cacheRoot, p1.base);
+                }
+
                 cache.md5[destpath] = md5;
-                cache.files[parse(p).base] = destpath;
+                cache.files[p1.base] = destpath;
                 copyFileSync(p, destpath);
             }
             rmSync(zipFile);
@@ -169,8 +174,7 @@ export class ProjectDependenciesManager {
             cache.md5[p] = md5;
             cache.files[parse(path).base] = p;
             writeFileSync(p, data);
-            if(await HKToolManager.setAllPublic(p, project))
-            {
+            if (await HKToolManager.setAllPublic(p, project)) {
                 cache.md5[p] = this.getMD5FromBuffer(readFileSync(p));
             }
         }
@@ -193,7 +197,7 @@ export class ProjectDependenciesManager {
                 allCount++;
                 await ProjectDependenciesManager.downloadDependencies(project, element, item, cache.cacheRoot);
                 count--;
-                console.error("complete("+ (allCount - count) +"/" + allCount +"): " + element.name);
+                console.error("complete(" + (allCount - count) + "/" + allCount + "): " + element.name);
                 if (count == 0) {
                     console.error("RefHelperGen: Start");
                     await HKToolManager.onGenRefHelper(cache.cacheRoot, project, cache);
@@ -221,14 +225,15 @@ export class ProjectDependenciesManager {
                 baseU = new ProjectDependency();
                 project.dependencies.push(baseU);
                 baseU.name = "Vanilla";
-                baseU.url = "https://files.catbox.moe/i4sdl6.zip";
-                baseU.ignoreFiles = [
-                    "Assembly-CSharp.dll",
-                    "mscorlib.dll",
-                    "Newtonsoft.Json.dll"
-                ];
+
 
             }
+            baseU.url = "https://github.com/HKLab/hkmod-files/raw/master/i4sdl6.zip";
+            baseU.ignoreFiles = [
+                "Assembly-CSharp.dll",
+                "mscorlib.dll",
+                "Newtonsoft.Json.dll"
+            ];
 
             HKToolManager.onCheckDependencies(project);
             project.dependencies.forEach(async element => {
@@ -296,11 +301,9 @@ export class ProjectManager {
         //Dependencies
 
         await ProjectDependenciesManager.checkProject(cache, project);
-        
-        if(cache.refHelper)
-        {
-            if(existsSync(cache.refHelper))
-            {
+
+        if (cache.refHelper) {
+            if (existsSync(cache.refHelper)) {
                 refs.push({
                     name: "HKToolRefHelper",
                     path: cache.refHelper,
@@ -310,9 +313,8 @@ export class ProjectManager {
         }
         for (let index = 0; index < project.dependencies.length; index++) {
             const element = project.dependencies[index];
-            if(noApi)
-            {
-                if(element.name == "Modding API" || element.name == "Vanilla" || element.name == "HKTool") continue;
+            if (noApi) {
+                if (element.name == "Modding API" || element.name == "Vanilla" || element.name == "HKTool") continue;
             }
 
             let c = cache.dependencies.find((val) => val.name == element.name);
@@ -345,7 +347,7 @@ export class ProjectManager {
             let files = readdirSync(project.libraryDir, "utf8");
             for (let i = 0; i < files.length; i++) {
                 const file = resolve(project.libraryDir, files[i]);
-                if(parse(file).ext != ".dll") continue;
+                if (parse(file).ext != ".dll") continue;
                 refs.push({
                     name: parse(file).name,
                     path: file,
@@ -353,7 +355,7 @@ export class ProjectManager {
                 });
             }
         }
-        if(project.reference) {
+        if (project.reference) {
             for (let i = 0; i < project.reference.length; i++) {
                 const file = resolve(dirname(cache.cacheRoot), project.reference[i]);
                 refs.push({

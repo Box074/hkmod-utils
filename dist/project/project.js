@@ -133,17 +133,21 @@ export class ProjectDependenciesManager {
             for (let i = 0; i < files.length; i++) {
                 let v = files[i];
                 let p = resolve(temp, v);
+                let p1 = parse(p);
                 let status = statSync(p);
                 if (status.isDirectory())
                     continue;
-                if (ignoreFiles.indexOf(parse(v).base) != -1 || (project.hktool?.inlineHook && parse(v).base.startsWith("MMHOOK_"))) {
+                if (ignoreFiles.indexOf(p1.base) != -1 || (project.hktool?.inlineHook && p1.base.startsWith("MMHOOK_"))) {
                     continue;
                 }
                 await HKToolManager.setAllPublic(p, project);
                 var md5 = this.getMD5(p);
                 var destpath = join(cacheRoot, md5 + extname(v));
+                if (p1.base.endsWith(".modres")) {
+                    destpath = join(cacheRoot, p1.base);
+                }
                 cache.md5[destpath] = md5;
-                cache.files[parse(p).base] = destpath;
+                cache.files[p1.base] = destpath;
                 copyFileSync(p, destpath);
             }
             rmSync(zipFile);
@@ -205,13 +209,13 @@ export class ProjectDependenciesManager {
                 baseU = new ProjectDependency();
                 project.dependencies.push(baseU);
                 baseU.name = "Vanilla";
-                baseU.url = "https://files.catbox.moe/i4sdl6.zip";
-                baseU.ignoreFiles = [
-                    "Assembly-CSharp.dll",
-                    "mscorlib.dll",
-                    "Newtonsoft.Json.dll"
-                ];
             }
+            baseU.url = "https://github.com/HKLab/hkmod-files/raw/master/i4sdl6.zip";
+            baseU.ignoreFiles = [
+                "Assembly-CSharp.dll",
+                "mscorlib.dll",
+                "Newtonsoft.Json.dll"
+            ];
             HKToolManager.onCheckDependencies(project);
             project.dependencies.forEach(async (element) => {
                 var dep = cache.dependencies.find((val, i, obj) => {

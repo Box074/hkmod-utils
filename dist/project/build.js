@@ -51,12 +51,13 @@ export class BuildManager {
         let hktoolCS = join(dir, "hktool.cs");
         writeFileSync(hktoolCS, HKToolManager.onGenerateCS(project), "utf-8");
         extCS.push(hktoolCS);
-        if (project?.hktool?.externRes) {
+        if (project?.hktool) {
             let resPath = join(output, project.modName + ".modres");
             let names = [];
             let offsets = [];
             let size = [];
             let compress = [];
+            let embeddedModRes = !project.hktool.externRes;
             let cache = [];
             let offset = 0;
             for (let key in project.resources) {
@@ -77,12 +78,20 @@ export class BuildManager {
                 cache.push(data);
                 offset += data.length;
             }
-            writeFileSync(resPath, HKToolManager.onProcessingResourcesEx(project.hktool, Buffer.concat(cache)));
+            if (embeddedModRes) {
+                let rp = resolve(dir, "modres");
+                writeFileSync(rp, HKToolManager.onProcessingResourcesEx(project.hktool, Buffer.concat(cache)));
+                res.push("modres");
+            }
+            else {
+                writeFileSync(resPath, HKToolManager.onProcessingResourcesEx(project.hktool, Buffer.concat(cache)));
+            }
             let modResList = join(dir, "modResList.cs");
             writeFileSync(modResList, ("[assembly: HKTool.Attributes.ModResourcesListAttribute(new string[]{ " + names.join(",") +
                 "}, new int[]{ " + offsets.join(",") +
                 "}, new int[]{ " + size.join(",") +
-                "}, new bool[]{ " + compress.join(",") + "})]\n"), "utf-8");
+                "}, new bool[]{ " + compress.join(",") +
+                "}, " + (embeddedModRes ? "true" : "false") + ")]\n"), "utf-8");
             extCS.push(modResList);
         }
         else {
