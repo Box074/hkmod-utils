@@ -3,7 +3,7 @@ import { existsSync, readFileSync, writeFileSync } from "fs";
 import { dirname, join, parse } from "path";
 import { gzipSync } from "zlib";
 import { ProjectDependency, ProjectManager } from "./project.js";
-export const bindir = join(dirname(new URL(import.meta.url).pathname.substring(1)), "..", "..", "bin", "net5.0");
+export const bindir = join(dirname(new URL(import.meta.url).pathname.substring(1)), "..", "..", "bin", "net6.0");
 export class HKToolConfig {
     needVersion;
     referenceLib = true;
@@ -160,10 +160,6 @@ export class HKToolManager {
         if (config.compressResources) {
             s += "[assembly: HKTool.Attributes.EmbeddedResourceCompressionAttribute()]\n";
         }
-        if (config.needVersion == undefined)
-            s += "[assembly: HKTool.Attributes.NeedHKToolVersionAttribute(HKTool.ModBase.compileVersion)]\n";
-        else
-            s += "[assembly: HKTool.Attributes.NeedHKToolVersionAttribute(\"" + config.needVersion + "\")]\n";
         return s;
     }
     static onCheckDependencies(project) {
@@ -189,9 +185,10 @@ export class HKToolManager {
             args.push(libraries[i].path);
         }
         let result = spawnSync("dotnet", args, {
-            encoding: "ascii"
+            encoding: "utf-8"
         });
         if (result.status != 0) {
+            console.log(args.join(' '));
             console.error(result.stderr);
         }
     }
@@ -203,7 +200,7 @@ export class HKToolManager {
             }
             let args = [join(bindir, "ILModify.dll"), "3", path];
             let result = spawn("dotnet", args);
-            result.stderr.setEncoding("ascii");
+            result.stderr.setEncoding("utf-8");
             result.on("exit", (code) => {
                 if (code != 0) {
                     reject(result.stderr.read());
@@ -224,7 +221,7 @@ export class HKToolManager {
             args.push(libraries[i].path);
         }
         let result = spawnSync("dotnet", args, {
-            encoding: "ascii"
+            encoding: "utf-8"
         });
         if (result.status != 0) {
             console.error(result.stderr);

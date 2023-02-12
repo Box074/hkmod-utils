@@ -18,7 +18,8 @@ public static partial class Program
                     });
                     assemblyMap.Add(ass.Name.Name, ass);
                     Console.Error.WriteLine(ass.FullName);
-                    Program.assemblys[ass.Name.Name] = Assembly.Load(bytes);
+                    var pdb = Path.ChangeExtension(v, "pdb");
+                    Program.assemblys[ass.Name.Name] = Assembly.Load(bytes, File.Exists(pdb) ? File.ReadAllBytes(pdb) : null);
                 }
                 catch (Exception)
                 {
@@ -55,6 +56,11 @@ public static partial class Program
         onlyFixDep = args[0] == "2";
         setAllPublic = args[0] == "3";
         var files = args.Skip(1).ToArray();
+        AppDomain.CurrentDomain.AssemblyResolve += (sender, ev) => {
+            var name = new AssemblyName(ev.Name);
+            if(assemblys.TryGetValue(name.Name, out var asm)) return asm;
+            return null;
+        };
         if (setAllPublic)
         {
             Console.Error.WriteLine(files[0]);

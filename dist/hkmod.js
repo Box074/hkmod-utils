@@ -2,7 +2,7 @@ import { exec, spawnSync } from "child_process";
 import { program } from "commander";
 import { zip } from "compressing";
 import { createHash } from "crypto";
-import { copyFileSync, createWriteStream, existsSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from "fs";
+import { copyFileSync, createWriteStream, existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from "fs";
 import { dirname, join, parse, resolve } from "path";
 import { BuildManager } from "./project/build.js";
 import { CSProjectManager } from "./project/csproj.js";
@@ -48,23 +48,18 @@ program.command("build [projectFile]")
     let project = ProjectManager.loadProject(projectFile);
     let cache = ProjectManager.loadProjectCache(projectFile);
     ProjectDependenciesManager.cleanupCache(cache, project);
-    project.csproj = project.csproj || new CSProjectTemplate();
-    let outDir = resolve(projectFile || ".", "Output");
-    try {
-        if (existsSync(outDir))
-            rmSync(outDir, { recursive: true });
-    }
-    catch (e) {
-    }
+    project.csproj = project.csproj ?? new CSProjectTemplate();
+    const root = dirname(projectFile ?? "./modProject.json");
+    let outDir = resolve(root, "Output");
     mkdirSync(outDir, { recursive: true });
     let csprojDir = await BuildManager.generateBuildEnv(project, cache, outDir);
     ProjectManager.saveProjectCache(cache, options["project"]);
     ProjectManager.saveProject(project, options["project"]);
     let result = spawnSync("dotnet", ["build"], {
         cwd: csprojDir,
-        encoding: "ascii"
+        encoding: "utf-8"
     });
-    rmSync(csprojDir, { recursive: true });
+    //rmSync(csprojDir, { recursive: true });
     if (result.status === 0) {
         let outDLL = join(outDir, project.modName + ".dll");
         HKToolManager.onModifyIL(outDLL, project, cache);
@@ -93,7 +88,7 @@ program.command("build [projectFile]")
             exec(cmd);
         }
         if (options["CreateZip"]) {
-            //zip.compressDir(outDir, resolve(projectFile || ".", "Output.zip"));
+            //zip.compressDir(outDir, resolve(root, "Output.zip"));
             let zipS = new zip.Stream();
             let files = readdirSync(outDir);
             for (let i = 0; i < files.length; i++) {
@@ -102,7 +97,7 @@ program.command("build [projectFile]")
                     relativePath: parse(file).base
                 });
             }
-            let zipP = resolve(projectFile || ".", "Output.zip");
+            let zipP = resolve(root, "Output.zip");
             let outZip = createWriteStream(zipP);
             zipS.pipe(outZip);
             outZip.on("finish", () => {

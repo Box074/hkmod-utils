@@ -94,17 +94,17 @@ export class BuildManager {
             else {
                 writeFileSync(resPath, HKToolManager.onProcessingResourcesEx(project.hktool, Buffer.concat(cache)));
             }
-
-            let modResList = join(dir, "modResList.cs");
-            writeFileSync(modResList, (
-                "[assembly: HKTool.Attributes.ModResourcesListAttribute(new string[]{ " + names.join(",") +
-                "}, new int[]{ " + offsets.join(",") +
-                "}, new int[]{ " + size.join(",") +
-                "}, new bool[]{ " + compress.join(",") + 
-                "}, " + (embeddedModRes ? "true" : "false") +")]\n"
-            ), "utf-8");
-            extCS.push(modResList);
-
+            if (names.length > 0) {
+                let modResList = join(dir, "modResList.cs");
+                writeFileSync(modResList, (
+                    "[assembly: HKTool.Attributes.ModResourcesListAttribute(new string[]{ " + names.join(",") +
+                    "}, new int[]{ " + offsets.join(",") +
+                    "}, new int[]{ " + size.join(",") +
+                    "}, new bool[]{ " + compress.join(",") +
+                    "}, " + (embeddedModRes ? "true" : "false") + ")]\n"
+                ), "utf-8");
+                extCS.push(modResList);
+            }
         }
         else {
             for (let key in project.resources) {

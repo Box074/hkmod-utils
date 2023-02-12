@@ -77,16 +77,17 @@ export class CSProjectManager {
             );
         }
         let root = dirname(cache.cacheRoot);
-
+        itemGroup.push(
+            new CSProjectItem("Compile", undefined, {
+                "Include": resolve(project.codeDir || "./scripts", "**", "*.cs")
+            })
+        );
         if (project.csCompileInfo) {
-            let compileInfo = resolve(project.codeDir || "./scripts", "..", "caches", "CompileInfo.cs");
-            let modRes = resolve(project.codeDir || "./scripts", "..", "caches", "ModResInfo.cs");
+            let compileInfo = resolve(cache.cacheRoot, project.modName + "-CompileInfo.cs");
+            let modRes = resolve(cache.cacheRoot, project.modName + "-ModResInfo.cs");
             writeFileSync(compileInfo, generateCSInfo(project), "utf-8");
             writeFileSync(modRes, HKToolManager.generateResInfo(project, isBuild), "utf-8");
             itemGroup.push(
-                new CSProjectItem("Compile", undefined, {
-                    "Include": resolve(project.codeDir || "./scripts", "**", "*.cs")
-                }),
                 new CSProjectItem("Compile", undefined, {
                     "Include": compileInfo
                 }),
